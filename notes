@@ -1,0 +1,88 @@
+AAR0nSx
+
+1.Struktur
+
+/kamera-steuerung
+│
+├── main.js       # Hauptprozess (Steuert Electron, IPC)
+├── preload.js    # Sichere Kommunikation Renderer ↔ Main
+├── app/          # Deine eigentliche App
+│   ├── index.html
+│   ├── renderer.js  # JS für die Website (Browser-Seite)
+│   └── styles.css   # optionales CSS
+└── package.json  # Electron und Node Konfiguration
+
+2. Prinzip
+
+- Index zeigt Buttons und Steuerflächen
+- renderer fängt klicks ab und sendet Nachrichten an main.js (vielleicht auch eher alles in einer Datei)
+- main.js führt Befehle an der Kamera aus (mit HTTP needle)
+
+Um auf Event zu reagieren z.B.:
+
+// renderer.js
+ipcRenderer.send('move-camera', { direction: 'left' });
+
+// main.js
+ipcMain.on('move-camera', (event, data) => {
+  console.log('Kamera bewegen:', data.direction);
+  // Hier dann Request an Kamera senden
+});
+
+3. Frontend index und renderer.js (bzw. main.js wenn ichs zusammenlege)
+
+- einfaches UI (Buttons für links, rechts etc.)
+- Dropdown für Belichtung?
+- Slider für zoom oder stufenweise irwie idk
+=> onEvent(Button gedrückt) -> Kamera bewegt sich
+
+4. Backend main.js
+
+- empfängt steuerbefehle (vom renderer?)
+- sendet HTTP request am Kamera (über needle)
+- Fehlerbehandlung:
+    - Kamera nicht erreichbar (Netzwerkfehler, falsche IP)
+    - Kamera gibt Fehlercode zurück (404, 500)
+    - Timeout
+    =>prüfen ob Error oder Statuscode nicht 200 sind
+
+    needle.get('http://kamera-ip/befehl', (error, response) => {
+      if (error) {
+        console.error('Netzwerkfehler:', error.message);
+        return;
+      }
+      if (response.statusCode !== 200) {
+        console.error('Kamera Fehler:', response.statusCode);
+        return;
+      }
+      console.log('Erfolgreich:', response.body);
+    });
+
+
+    - Bei Error erneut versuchen?
+    - Fehlermeldung im Frontend ausgeben
+
+    IPC Fehler:
+    - Kanalname falsch
+    - falsche/fehlende Parameter
+
+    ipcMain.on('move-camera', (event, data) => {
+      if (!data || !data.direction) {
+        console.error('Ungültige Kamerasteuerung:', data);
+        return;
+      }
+      console.log('Bewege Kamera Richtung:', data.direction);
+    });
+
+
+    BrowserWindow Fehler:
+    - index nicht gefunden
+
+    mainWindow.loadFile('index.html').catch(err => {
+      console.error('Fehler beim Laden von index.html:', err);
+    });
+
+
+Stabilität:
+    - Buttons deaktivieren, während anfrage läuft
+    - automatisch neuen Versuch nach 1-2 Sekunden
