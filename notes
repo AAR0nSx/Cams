@@ -86,3 +86,42 @@ ipcMain.on('move-camera', (event, data) => {
 Stabilität:
     - Buttons deaktivieren, während anfrage läuft
     - automatisch neuen Versuch nach 1-2 Sekunden
+
+
+
+
+    ------------------------------------------------------------
+
+    const { remote } = require('electron'); // Importiere Electron-Funktionalität, um auf DOM zuzugreifen
+
+    // Funktion zum Setzen der Richtung und Klicken der Schaltfläche
+    function moveCamera(direction) {
+      // Hole das Papier-Icon-Button-Element basierend auf der Richtung
+      let button = document.querySelector(`paper-icon-button[dir="${direction}"]`);
+
+      if (button) {
+        button.click(); // Klicke den Button, um die Bewegung zu starten
+        console.log(`Bewege Kamera in Richtung: ${direction}`);
+      } else {
+        console.log(`Button für Richtung "${direction}" nicht gefunden.`);
+      }
+    }
+
+    // Beispiel: Bewege die Kamera nach rechts
+    moveCamera('PT_MOTOR_RIGHT');
+
+    // Beispiel: Bewege die Kamera nach links
+    moveCamera('PT_MOTOR_LEFT');
+
+
+Erklärung:
+document.querySelector: Hiermit kannst du ein bestimmtes paper-icon-button-Element basierend auf dem dir-Attribut auswählen.
+button.click(): Simuliert den Klick auf das gewählte Button-Element.
+Die Funktion moveCamera wird mit verschiedenen dir-Werten aufgerufen, um die Kamera in die gewünschte Richtung zu bewegen.
+Weitere Anmerkungen:
+Falls du die Steuerung über die Konsole im DevTools von Electron ausführen möchtest, kannst du den Code dort ebenfalls direkt ausführen, solange du Zugriff auf das HTML-Element hast.
+Um sicherzustellen, dass der querySelector funktioniert, solltest du sicherstellen, dass das Webinterface vollständig geladen ist, bevor du versuchst, das Element auszuwählen.
+Eventuell notwendig:
+Falls die Schaltflächen dynamisch durch JavaScript oder Web-Komponenten generiert werden (z. B. Polymer oder Lit-Element), könnte es sein, dass du das Element erst nach dem Laden des gesamten Dokuments ansprechen kannst. In solchen Fällen kann es hilfreich sein, auf das DOMContentLoaded-Event zu warten oder den Code im richtigen Kontext innerhalb deines Electron-Fensters auszuführen.
+
+Hoffentlich hilft dir das bei deinem Projekt! Lass mich wissen, ob du noch Fragen hast oder Unterstützung bei etwas anderem benötigst.
