@@ -69,6 +69,22 @@ electronApp.on("activate", () => {
 });
 
 //IPC Handler
+
+//Aktuellen Zoom abfragen
+ipcMain.handle("get-current-zoom", async () => {
+  try{
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_getzoom.cgi");
+    const data = await response.json(); //Antwort in JSON
+    console.log("Aktueller Kamerazoom: ", data)
+    return {success: true, zoomLevel: parseInt(data)}
+  }catch(e){
+    console.error("Fehler beim abrufen des Zoomlevels.", error);
+    console.log(e.message);
+    return {success: false, zoomLevel: null};
+  }
+});
+
+//Zoom enhance
 ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
   console.log("Zoom anpassen auf:", zoomLevel);
 
@@ -84,12 +100,65 @@ ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
 
     const data = await response.json();
     console.log("Antwort von Kamera:", data);
-    return { success: true, message: "Zoom erfolgreich angepasst." };
+    return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
   } catch (error) {
     console.error("Fehler beim Zoom:", error);
     return { success: false, message: "Fehler beim Zoom" };
   }
 });
+
+//Zoom decrease
+ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
+  console.log("Zoom anpassen auf:", zoomLevel);
+
+  // Anfrage an Kamera senden
+  try {
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zoompositionfromindex: zoomLevel.toString() }),
+    });
+
+    const data = await response.json();
+    console.log("Antwort von Kamera:", data);
+    return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
+  } catch (error) {
+    console.error("Fehler beim Zoom:", error);
+    return { success: false, message: "Fehler beim Zoom" };
+  }
+});
+
+///cgi-bin/lums_ndipantilt.cgi
+
+//dir = PT_MOTOR_RIGHT
+//dir = PT_UP_LEFT etc
+
+/*
+ipcMain.handle("move-direction", async (event, direction) => {
+  console.log("Bewege Kamera in Richtung: ", direction);
+
+  try{
+    const response = await fetch('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ direction: direction.toString() }),
+    });
+    const data = await response.json();
+    console.log("Antwort von Kamera:", data);
+    return {success: true, direction: direction.toString()};
+
+  }catch(e){
+    console.error("Fehler beim Bewegen:", e)
+    return {success: false, message: "Fehler beim Bewegen" };
+  }
+});
+*/
+
+
 
 function getCameraData() {
   needle.get(
@@ -123,33 +192,6 @@ function sendSettings(settings) {
   window.webContents.send("sendSettings", settings.renderer);
   console.log("send");
 }
-
-
-function enhanceZoom() {
-  // IPC-HANDLER
-  ipcMain.handle('zoom-enhance', async (event, level) => {
-    console.log('Zoom-Level empfangen im main process:', level);
-
-    console.log("Zoom wird verändert");
-    fetch('http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        zoompositionfromindex: "20" // oder andere Zoom-Stufe
-      })
-    })
-        .then(response => response.json())
-        .then(data => console.log('set zoom:', data))
-        .catch(error => console.error('Error while setting zoom:', error));
-
-    return { success: true, message: `Zoom gesetzt auf ${level}` };
-  });
-}
-
-
-
 
 
 

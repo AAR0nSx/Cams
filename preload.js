@@ -5,7 +5,13 @@
 
 const { contextBridge, ipcRenderer } = require("electron");
 
+//Bridge zu Main
 contextBridge.exposeInMainWorld("electronAPI", {
-    enhanceZoom: (zoomLevel) => ipcRenderer.invoke("zoom-enhance", zoomLevel)
+    enhanceZoom: (zoomLevel) => ipcRenderer.invoke("zoom-enhance", zoomLevel),
+    decreaseZoom: (zoomLevel) => ipcRenderer.invoke("zoom-decrease", zoomLevel),
+    getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),
+    //resetZoom: (zoomLevel) => ipcRenderer.invoke("reset-zoom"),
 });
+
+
 
