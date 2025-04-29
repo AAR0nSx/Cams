@@ -40,7 +40,7 @@ function createMainWindow() {
   const mainWindow = new BrowserWindow();
 
   // Load an HTML file into the window
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('../UI/index.html');
 
   mainWindow.webContents.send('message', 'Hello from main process!');
 }
