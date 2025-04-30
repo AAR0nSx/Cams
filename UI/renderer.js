@@ -7,7 +7,8 @@ console.log("renderer.js geladen.");
 let currentZoomLevel = 5; // Platzhalter
 const ZOOM_MIN = 0;
 const ZOOM_MAX = 36;
-const ZOOM_STEP = 0.4;
+const ZOOM_STEP = 0.2;
+const ZOOM_STEP_BUTTON = 1;
 
 let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
 
@@ -24,10 +25,6 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.focus();
 
     //BUTTONS
-
-
-
-
     const buttons = document.querySelectorAll(".direction-button");
 
     buttons.forEach(button => {
@@ -140,25 +137,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
 });
 
-//let zoomInterval = null;
 
-const zoomInBtn = document.getElementById("zoomInBtn");
-const zoomOutBtn = document.getElementById("zoomOutBtn");
 
-zoomInBtn.addEventListener("mousedown", () => {
-    zoomInterval = setInterval(() => {
-        moreZoom();
-    }, 500); // langsamer Zoom
-});
-zoomOutBtn.addEventListener("mousedown", () => {
-    zoomInterval = setInterval(() => {
-        lessZoom();
-    }, 500);
-});
 
-document.addEventListener("mouseup", () => {
-    clearInterval(zoomInterval);
-});
 
 //window.addEventListener("offline")
 
@@ -179,7 +160,7 @@ window.addEventListener("beforeunload", () => {
 
 
 //Funktionen für Zoom Buttons
-/*
+
 function moreZoom() {
     if (currentZoomLevel + ZOOM_STEP <= ZOOM_MAX) {
         currentZoomLevel += ZOOM_STEP;
@@ -195,7 +176,26 @@ function moreZoom() {
     }
 
 }
-*/
+
+function moreZoomButton() {
+    if (currentZoomLevel + ZOOM_STEP_BUTTON <= ZOOM_MAX) {
+        currentZoomLevel += ZOOM_STEP_BUTTON;
+        window.electronAPI.enhanceZoom(currentZoomLevel)
+            .then(response => {
+                console.log(response.message);
+            })
+            .catch(error => {
+                console.error("Zoom-Fehler:", error);
+            });
+    } else {
+        console.log("Maximaler Zoom erreicht.");
+    }
+
+}
+
+
+/*
+//backup
 let isZooming = false;
 
 async function moreZoom() {
@@ -215,7 +215,10 @@ async function moreZoom() {
 
     isZooming = false;
 }
-/*
+*/
+
+
+
 function lessZoom() {
     if (currentZoomLevel - ZOOM_STEP >= ZOOM_MIN) {
         currentZoomLevel -= ZOOM_STEP;
@@ -230,8 +233,25 @@ function lessZoom() {
         console.log("Minimaler Zoom erreicht.");
     }
 }
-*/
 
+function lessZoomButton() {
+    if (currentZoomLevel - ZOOM_STEP_BUTTON >= ZOOM_MIN) {
+        currentZoomLevel -= ZOOM_STEP_BUTTON;
+        window.electronAPI.decreaseZoom(currentZoomLevel)
+            .then(response => {
+                console.log(response.message);
+            })
+            .catch(error => {
+                console.error("Zoom-Fehler:", error);
+            });
+    } else {
+        console.log("Minimaler Zoom erreicht.");
+    }
+}
+
+
+/*
+//backup
 async function lessZoom() {
     if (isZooming) return;
     if (currentZoomLevel + ZOOM_STEP > ZOOM_MAX) return;
@@ -249,7 +269,7 @@ async function lessZoom() {
 
     isZooming = false;
 }
-
+*/
 
 //BUTTONS
 /*
