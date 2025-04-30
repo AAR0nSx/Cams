@@ -10,62 +10,89 @@ const ZOOM_MAX = 36;
 const ZOOM_STEP = 1;
 
 let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
+//Event-Listener
+//On DOM Load Fokus für Button setzen
+const pressedKeys = new Set();
+let lastDirection = null;
 let stopTimeout = null;
 
 
 
-//Event-Listener
-//On DOM Load Fokus für Button setzen
+
 window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
-    // Fokus explizit setzen – das ist entscheidend
-    document.body.setAttribute("tabindex", "0");
     document.body.focus();
-    console.log("Fokus auf Body gesetzt.");
 
-    // Kontrollausgabe ob Element aktiv ist
-    console.log("Ist document.activeElement === body?", document.activeElement === document.body);
+    //BUTTONS
+    const buttons = document.querySelectorAll(".direction-button");
 
+    buttons.forEach(button => {
+        const direction = button.dataset.direction;
 
-    console.log("DOM geladen und Fokus gesetzt!");
-
-
-    document.addEventListener('keydown', (event) => {
-        console.log("Keydown detected.");
-        const direction = getDirectionFromKey(event.code);
-        if (direction && activeKey !== direction) {
-            activeKey = direction;
+        button.addEventListener("mousedown", () => {
             window.electronAPI.moveCamera(direction);
-            console.log("Bewege Kamera:", direction);
+            console.log("Kamera bewegt sich:", direction);
+        });
+
+        const stopMovement = () => {
+            window.electronAPI.moveCamera("stop");
+            console.log("Kamera gestoppt");
+        };
+
+        button.addEventListener("mouseup", stopMovement);
+        button.addEventListener("mouseleave", stopMovement);
+    });
+
+    //KEYS
+    document.addEventListener("keydown", (event) => {
+        if (!event.repeat) {
+            pressedKeys.add(event.code);
+            handleCombinedDirection();
         }
     });
 
-    document.addEventListener('keyup', (event) => {
-        console.log("Keyup detected.");
-        const direction = getDirectionFromKey(event.code);
-        if (direction && activeKey === direction) {
-            activeKey = null;
-
-            // Sanftes Stoppen nach Verzögerung
+    document.addEventListener("keyup", (event) => {
+        pressedKeys.delete(event.code);
+        if (pressedKeys.size === 0) {
             if (stopTimeout) clearTimeout(stopTimeout);
             stopTimeout = setTimeout(() => {
-                window.electronAPI.moveCamera('stop');
+                window.electronAPI.moveCamera("stop");
+                lastDirection = null;
                 console.log("Kamera gestoppt");
-            }, 0); // z. B. 100ms sanfte Verzögerung
+            }, 100);
+        } else {
+            handleCombinedDirection();
         }
     });
 
-    //Übersetzung der keyCodes in directions für moveCamera(direction)
-    function getDirectionFromKey(code) {
-        switch (code) {
-            case 'ArrowLeft': return 'left';
-            case 'ArrowRight': return 'right';
-            case 'ArrowUp': return 'up';
-            case 'ArrowDown': return 'down';
-            default: return null;
+    function handleCombinedDirection() {
+        const direction = getCombinedDirection(Array.from(pressedKeys));
+        if (direction && direction !== lastDirection) {
+            window.electronAPI.moveCamera(direction);
+            lastDirection = direction;
+            console.log("Bewege Kamera:", direction);
         }
     }
+
+    function getCombinedDirection(codes) {
+        const keys = new Set(codes);
+        const up = keys.has("ArrowUp");
+        const down = keys.has("ArrowDown");
+        const left = keys.has("ArrowLeft");
+        const right = keys.has("ArrowRight");
+
+        if (up && left) return "up_left";
+        if (up && right) return "up_right";
+        if (down && left) return "down_left";
+        if (down && right) return "down_right";
+        if (up) return "up";
+        if (down) return "down";
+        if (left) return "left";
+        if (right) return "right";
+        return null;
+    }
 });
+
 
 
 //window.addEventListener("offline")
@@ -120,6 +147,7 @@ function lessZoom() {
 
 
 //BUTTONS
+/*
 function moveCamera(direction) {
     switch (direction) {
         case "left":
@@ -146,3 +174,4 @@ function moveCamera(direction) {
             break;
     }
 }
+*/

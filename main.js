@@ -274,7 +274,97 @@ ipcMain.on('move-camera', (event, direction) => {
     });
   }
 
-//Schräge bewegungen folgen
+//Schräge bewegungen
+
+  if (direction === 'up_left') {
+    const postData = JSON.stringify({
+      cmd: "PT_UP_LEFT"
+    });
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    };
+
+    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+      if (!error && response.statusCode == 200) {
+        console.log("Success:", response.body);
+      } else {
+        console.error("Request failed:", error);
+      }
+    });
+  }
+
+  if (direction === 'down_left') {
+    const postData = JSON.stringify({
+      cmd: "PT_DOWN_LEFT"
+    });
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    };
+
+    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+      if (!error && response.statusCode == 200) {
+        console.log("Success:", response.body);
+      } else {
+        console.error("Request failed:", error);
+      }
+    });
+  }
+
+  if (direction === 'up_right') {
+    const postData = JSON.stringify({
+      cmd: "PT_UP_RIGHT"
+    });
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    };
+
+    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+      if (!error && response.statusCode == 200) {
+        console.log("Success:", response.body);
+      } else {
+        console.error("Request failed:", error);
+      }
+    });
+  }
+
+  if (direction === 'down_right') {
+    const postData = JSON.stringify({
+      cmd: "PT_DOWN_RIGHT"
+    });
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    };
+
+    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+      if (!error && response.statusCode == 200) {
+        console.log("Success:", response.body);
+      } else {
+        console.error("Request failed:", error);
+      }
+    });
+  }
+
+
 
 });
 
