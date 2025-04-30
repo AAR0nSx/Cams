@@ -1,42 +1,70 @@
 /*
 * JS für die index.html
 */
+console.log("renderer.js geladen.");
+
 
 let currentZoomLevel = 5; // Platzhalter
 const ZOOM_MIN = 0;
 const ZOOM_MAX = 36;
 const ZOOM_STEP = 1;
 
-const axios = require('axios');
-const main = require("../main.js");
-const electronApp = require("electron").app;
-const electronBrowserWindow = require("electron").BrowserWindow;
-var needle = require("needle");
-const nodePath = require("path");
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
-
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
+let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
+let stopTimeout = null;
 
 
 
 //Event-Listener
-//Wert abfragen
+//On DOM Load Fokus für Button setzen
 window.addEventListener("DOMContentLoaded", () => {
-    window.electronAPI.getCurrentZoom()
-        .then(response => {
-            if (response.success && typeof response.zoomLevel === "number") {
-                currentZoomLevel = response.zoomLevel;
-                console.log("Initialer Zoom-Level:", currentZoomLevel);
-                // Optional: UI aktualisieren
-            } else {
-                console.warn("Konnte Zoom-Level nicht abrufen, Standardwert wird verwendet.");
-            }
-        })
-        .catch(error => {
-            console.error("Fehler beim Initial-Zoom:", error);
-        });
+    document.body.tabIndex = 0;
+    // Fokus explizit setzen – das ist entscheidend
+    document.body.setAttribute("tabindex", "0");
+    document.body.focus();
+    console.log("Fokus auf Body gesetzt.");
+
+    // Kontrollausgabe ob Element aktiv ist
+    console.log("Ist document.activeElement === body?", document.activeElement === document.body);
+
+
+    console.log("DOM geladen und Fokus gesetzt!");
+
+
+    document.addEventListener('keydown', (event) => {
+        console.log("Keydown detected.");
+        const direction = getDirectionFromKey(event.code);
+        if (direction && activeKey !== direction) {
+            activeKey = direction;
+            window.electronAPI.moveCamera(direction);
+            console.log("Bewege Kamera:", direction);
+        }
+    });
+
+    document.addEventListener('keyup', (event) => {
+        console.log("Keyup detected.");
+        const direction = getDirectionFromKey(event.code);
+        if (direction && activeKey === direction) {
+            activeKey = null;
+
+            // Sanftes Stoppen nach Verzögerung
+            if (stopTimeout) clearTimeout(stopTimeout);
+            stopTimeout = setTimeout(() => {
+                window.electronAPI.moveCamera('stop');
+                console.log("Kamera gestoppt");
+            }, 0); // z. B. 100ms sanfte Verzögerung
+        }
+    });
+
+    //Übersetzung der keyCodes in directions für moveCamera(direction)
+    function getDirectionFromKey(code) {
+        switch (code) {
+            case 'ArrowLeft': return 'left';
+            case 'ArrowRight': return 'right';
+            case 'ArrowUp': return 'up';
+            case 'ArrowDown': return 'down';
+            default: return null;
+        }
+    }
 });
 
 
@@ -89,47 +117,32 @@ function lessZoom() {
         console.log("Minimaler Zoom erreicht.");
     }
 }
-/*
-function moveDirection(){
-    window.electronAPI.moveDirection()
-        .then(response => {
-            console.log(response.message);
-        })
-    .catch(error => {
-        console.error("Bewegungs-Fehler:", error);
-    });
-}
-*/
-
-// !!! <paper-icon-button icon="arrow:arrow-upward-left" dir="PT_MOTOR_LEFT" noink="" role="button" tabindex="0" aria-disabled="true"></paper-icon-button> !!!
 
 
-
-
+//BUTTONS
 function moveCamera(direction) {
     switch (direction) {
         case "left":
             window.electronAPI.moveCamera('left');
+            console.log("Bewege Kamera nach links...");
             break;
         case "right":
             window.electronAPI.moveCamera('right');
+            console.log("Bewege Kamera nach rechts...");
             break;
         case "up":
             window.electronAPI.moveCamera('up');
+            console.log("Bewege Kamera nach oben...");
             break;
         case "down":
             window.electronAPI.moveCamera('down');
+            console.log("Bewege Kamera nach unten...");
+            break;
+        case "stop":
+            window.electronAPI.moveCamera('stop');
             break;
         default:
             console.log("unable to move camera.");
             break;
     }
-
 }
-
-function getData(){
-    console.log("current Data:");
-    main.getCameraData();
-}
-
-

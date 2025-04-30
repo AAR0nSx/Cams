@@ -124,3 +124,18 @@ Um sicherzustellen, dass der querySelector funktioniert, solltest du sicherstell
 Eventuell notwendig:
 Falls die Schaltflächen dynamisch durch JavaScript oder Web-Komponenten generiert werden (z. B. Polymer oder Lit-Element), könnte es sein, dass du das Element erst nach dem Laden des gesamten Dokuments ansprechen kannst.
 In solchen Fällen kann es hilfreich sein, auf das DOMContentLoaded-Event zu warten oder den Code im richtigen Kontext innerhalb deines Electron-Fensters auszuführen.
+
+
+
+
+document.body.tabIndex = 0;
+    // Fokus explizit setzen – das ist entscheidend
+    document.body.setAttribute("tabindex", "0");
+    document.body.focus();
+    console.log("Fokus auf Body gesetzt.");
+
+    // Kontrollausgabe ob Element aktiv ist
+    console.log("Ist document.activeElement === body?", document.activeElement === document.body);
+
+
+    console.log("DOM geladen und Fokus gesetzt!");

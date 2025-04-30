@@ -44,6 +44,7 @@ function createWindow() {
     //.then(() => { window.webContents.send('sendSettings', settings.renderer); })
     .then(() => {
       window.show();
+      window.focus();
     });
 
   return window;
@@ -160,6 +161,8 @@ ipcMain.handle("move-direction", async (event, direction) => {
 
 ipcMain.on('move-camera', (event, direction) => {
 
+  console.log("Nachricht empfangen im main Prozess.");
+
   //turn left
   if (direction === 'left') {
     const postData = JSON.stringify({
@@ -248,6 +251,28 @@ ipcMain.on('move-camera', (event, direction) => {
       }
     });
   }
+  //STOP
+  if (direction === 'stop') {
+    const postData = JSON.stringify({
+      cmd: "PT_MOTOR_STOP"
+    });
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    };
+
+    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+      if (!error && response.statusCode == 200) {
+        console.log("Success:", response.body);
+      } else {
+        console.error("Request failed:", error);
+      }
+    });
+  }
 
 //Schräge bewegungen folgen
 
@@ -292,6 +317,7 @@ function sendSettings(settings) {
 
 
 //Exports for renderer
+/*
 module.exports = {
 
   getCameraData: function() {
@@ -321,21 +347,5 @@ module.exports = {
         }
     );
   }
-  ,
-  enchanceZoom: function() {
-    fetch('http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        zoompositionfromindex: "3" // oder andere Zoom-Stufe
-      })
-    })
-        .then(response => response.json())
-        .then(data => console.log('set zoom:', data))
-        .catch(error => console.error('Error while setting zoom:', error));
-
-  }
-
 }
+*/
