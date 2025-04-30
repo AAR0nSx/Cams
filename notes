@@ -122,6 +122,5 @@ Weitere Anmerkungen:
 Falls du die Steuerung über die Konsole im DevTools von Electron ausführen möchtest, kannst du den Code dort ebenfalls direkt ausführen, solange du Zugriff auf das HTML-Element hast.
 Um sicherzustellen, dass der querySelector funktioniert, solltest du sicherstellen, dass das Webinterface vollständig geladen ist, bevor du versuchst, das Element auszuwählen.
 Eventuell notwendig:
-Falls die Schaltflächen dynamisch durch JavaScript oder Web-Komponenten generiert werden (z. B. Polymer oder Lit-Element), könnte es sein, dass du das Element erst nach dem Laden des gesamten Dokuments ansprechen kannst. In solchen Fällen kann es hilfreich sein, auf das DOMContentLoaded-Event zu warten oder den Code im richtigen Kontext innerhalb deines Electron-Fensters auszuführen.
-
-Hoffentlich hilft dir das bei deinem Projekt! Lass mich wissen, ob du noch Fragen hast oder Unterstützung bei etwas anderem benötigst.
+Falls die Schaltflächen dynamisch durch JavaScript oder Web-Komponenten generiert werden (z. B. Polymer oder Lit-Element), könnte es sein, dass du das Element erst nach dem Laden des gesamten Dokuments ansprechen kannst.
+In solchen Fällen kann es hilfreich sein, auf das DOMContentLoaded-Event zu warten oder den Code im richtigen Kontext innerhalb deines Electron-Fensters auszuführen.

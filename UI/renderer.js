@@ -7,6 +7,7 @@ const ZOOM_MIN = 0;
 const ZOOM_MAX = 36;
 const ZOOM_STEP = 1;
 
+const axios = require('axios');
 const main = require("../main.js");
 const electronApp = require("electron").app;
 const electronBrowserWindow = require("electron").BrowserWindow;
@@ -100,19 +101,24 @@ function moveDirection(){
 }
 */
 
-function moveCamera(direction){
+// !!! <paper-icon-button icon="arrow:arrow-upward-left" dir="PT_MOTOR_LEFT" noink="" role="button" tabindex="0" aria-disabled="true"></paper-icon-button> !!!
+
+
+
+
+function moveCamera(direction) {
     switch (direction) {
         case "left":
-            ipcRenderer.send('move-camera', { direction: 'left' });
+            window.electronAPI.moveCamera('left');
             break;
         case "right":
-            ipcRenderer.send('move-camera', { direction: 'right' });
+            window.electronAPI.moveCamera('right');
             break;
         case "up":
-            ipcRenderer.send('move-camera', { direction: 'up' });
+            window.electronAPI.moveCamera('up');
             break;
         case "down":
-            ipcRenderer.send('move-camera', { direction: 'down' });
+            window.electronAPI.moveCamera('down');
             break;
         default:
             console.log("unable to move camera.");

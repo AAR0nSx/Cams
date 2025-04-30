@@ -50,7 +50,7 @@ app.whenReady().then(createMainWindow);
 
 
 
-function createMainWindow() {
+function createMainwindow() {
   const mainWindow = new BrowserWindow({ width: 1280,
     height: 960,webPreferences: {
       nodeIntegration: true,
@@ -67,10 +67,10 @@ function createMainWindow() {
 //mainWindow.webContents.send('message', 'Hello from main process!');
 
 
-/*
 
-//var postData =  "{\"exposuremodeindex\":\"\",\"exposurelevelname\":\"\",\"gainmanualidx\":\"\",\"irispriidx\":\"14\",\"shuttermanualidx\":\"\",\"gammanameindex\":\"\"}";
-/*
+
+var postData =  "{\"exposuremodeindex\":\"\",\"exposurelevelname\":\"\",\"gainmanualidx\":\"\",\"irispriidx\":\"14\",\"shuttermanualidx\":\"\",\"gammanameindex\":\"\"}";
+
 var postData= JSON.stringify(postObject);
 var options = {
     headers: {  'Content-Type': 'application/javascript',
@@ -88,4 +88,6 @@ var options = {
     }
         
   });
-*/
+
+
+
