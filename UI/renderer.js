@@ -7,15 +7,15 @@ console.log("renderer.js geladen.");
 let currentZoomLevel = 5; // Platzhalter
 const ZOOM_MIN = 0;
 const ZOOM_MAX = 36;
-const ZOOM_STEP = 1;
+const ZOOM_STEP = 0.4;
 
 let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
-//Event-Listener
+
 //On DOM Load Fokus für Button setzen
 const pressedKeys = new Set();
 let lastDirection = null;
 let stopTimeout = null;
-
+let zoomInterval = null;
 
 
 
@@ -24,6 +24,10 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.focus();
 
     //BUTTONS
+
+
+
+
     const buttons = document.querySelectorAll(".direction-button");
 
     buttons.forEach(button => {
@@ -46,20 +50,56 @@ window.addEventListener("DOMContentLoaded", () => {
     //KEYS
     document.addEventListener("keydown", (event) => {
         if (!event.repeat) {
+            // ZOOM IN (+)
+            if (event.code === "BracketRight") {
+                if (!zoomInterval) {
+                    zoomInterval = setInterval(() => {
+                        moreZoom();
+                        console.log("Zooming in...");
+                    }, 0);
+                }
+                return;
+            }
+
+            // ZOOM OUT (-)
+            if (event.code === "Slash") {
+                if (!zoomInterval) {
+                    zoomInterval = setInterval(() => {
+                        lessZoom();
+                        console.log("Zooming out...");
+                    }, 0);
+                }
+                return;
+            }
+
             pressedKeys.add(event.code);
             handleCombinedDirection();
         }
     });
 
     document.addEventListener("keyup", (event) => {
+        // Zoom beenden
+        if (
+            event.code === "BracketRight" ||
+            event.code === "Slash"
+        ) {
+            if (zoomInterval) {
+                clearInterval(zoomInterval);
+                zoomInterval = null;
+                console.log("Zoom gestoppt");
+            }
+            return;
+        }
+
         pressedKeys.delete(event.code);
+
         if (pressedKeys.size === 0) {
             if (stopTimeout) clearTimeout(stopTimeout);
             stopTimeout = setTimeout(() => {
                 window.electronAPI.moveCamera("stop");
                 lastDirection = null;
                 console.log("Kamera gestoppt");
-            }, 100);
+            }, 400);
         } else {
             handleCombinedDirection();
         }
@@ -91,9 +131,34 @@ window.addEventListener("DOMContentLoaded", () => {
         if (right) return "right";
         return null;
     }
+
+    function handleZoom(){
+        const enhanceZoom = keys.has("+");
+        const reduceZoom = keys.has("-");
+
+    }
+
 });
 
+//let zoomInterval = null;
 
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+
+zoomInBtn.addEventListener("mousedown", () => {
+    zoomInterval = setInterval(() => {
+        moreZoom();
+    }, 500); // langsamer Zoom
+});
+zoomOutBtn.addEventListener("mousedown", () => {
+    zoomInterval = setInterval(() => {
+        lessZoom();
+    }, 500);
+});
+
+document.addEventListener("mouseup", () => {
+    clearInterval(zoomInterval);
+});
 
 //window.addEventListener("offline")
 
@@ -113,7 +178,8 @@ window.addEventListener("beforeunload", () => {
 
 
 
-//Funktionen
+//Funktionen für Zoom Buttons
+/*
 function moreZoom() {
     if (currentZoomLevel + ZOOM_STEP <= ZOOM_MAX) {
         currentZoomLevel += ZOOM_STEP;
@@ -129,7 +195,27 @@ function moreZoom() {
     }
 
 }
+*/
+let isZooming = false;
 
+async function moreZoom() {
+    if (isZooming) return;
+    if (currentZoomLevel + ZOOM_STEP > ZOOM_MAX) return;
+
+    isZooming = true;
+    currentZoomLevel += ZOOM_STEP;
+    const zoomToSend = Math.round(currentZoomLevel * 10) / 10;
+
+    try {
+        const response = await window.electronAPI.enhanceZoom(zoomToSend);
+        console.log(response.message);
+    } catch (error) {
+        console.error("Zoom-Fehler:", error);
+    }
+
+    isZooming = false;
+}
+/*
 function lessZoom() {
     if (currentZoomLevel - ZOOM_STEP >= ZOOM_MIN) {
         currentZoomLevel -= ZOOM_STEP;
@@ -143,6 +229,25 @@ function lessZoom() {
     } else {
         console.log("Minimaler Zoom erreicht.");
     }
+}
+*/
+
+async function lessZoom() {
+    if (isZooming) return;
+    if (currentZoomLevel + ZOOM_STEP > ZOOM_MAX) return;
+
+    isZooming = true;
+    currentZoomLevel -= ZOOM_STEP;
+    const zoomToSend = Math.round(currentZoomLevel * 10) / 10;
+
+    try {
+        const response = await window.electronAPI.enhanceZoom(zoomToSend);
+        console.log(response.message);
+    } catch (error) {
+        console.error("Zoom-Fehler:", error);
+    }
+
+    isZooming = false;
 }
 
 

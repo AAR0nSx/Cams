@@ -70,21 +70,6 @@ electronApp.on("activate", () => {
 });
 
 //IPC Handler
-
-//Aktuellen Zoom abfragen
-ipcMain.handle("get-current-zoom", async () => {
-  try{
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_getzoom.cgi");
-    const data = await response.json(); //Antwort in JSON
-    console.log("Aktueller Kamerazoom: ", data)
-    return {success: true, zoomLevel: parseInt(data)}
-  }catch(e){
-    console.error("Fehler beim abrufen des Zoomlevels.", error);
-    console.log(e.message);
-    return {success: false, zoomLevel: null};
-  }
-});
-
 //Zoom enhance
 ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
   console.log("Zoom anpassen auf:", zoomLevel);

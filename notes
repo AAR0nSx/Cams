@@ -94,7 +94,7 @@ Stabilität:
 
 
  TODO
- - Buttons von onclick auf onHold o.ä., dass kein kompletter Schwenk ausgeführt wird
- - Zoom Shortcuts einbauen (+, - ?)
+
+ - Zoom Buttons anders behandeln (Einer schritte und onclick)
  - Oberfläche Designen (was ist wichtig?)
  - Klickproblem beim Starten durch IP-Textfeld umgehen
