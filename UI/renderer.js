@@ -24,6 +24,32 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
+    // Automatisch senden bei Auswahl
+    const exposureElements = [
+        { id: "exposure-mode", type: "exposuremode" },
+        { id: "shutter", type: "shutter" },
+        { id: "gain", type: "gain" },
+        { id: "gamma", type: "gamma" }
+    ];
+
+    exposureElements.forEach(({ id, type }) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("change", () => {
+                const value = el.value;
+                console.log(`Sende ${type}: ${value}`);
+                window.electronAPI.setExposure(type, value)
+                    .then(response => {
+                        console.log("Antwort:", response.message);
+                    })
+                    .catch(err => {
+                        console.error("Fehler:", err);
+                    });
+            });
+        }
+    });
+
+
     //BUTTONS
     const buttons = document.querySelectorAll(".direction-button");
 
@@ -128,16 +154,43 @@ window.addEventListener("DOMContentLoaded", () => {
         if (right) return "right";
         return null;
     }
-
-    function handleZoom(){
-        const enhanceZoom = keys.has("+");
-        const reduceZoom = keys.has("-");
-
-    }
-
 });
 
+//setExposure
 
+/*
+const exposureSettings = {
+    "exposuremodeindex":"",
+    "exposurelevelname":"",
+    "gainmanualidx":"",
+    "irispriidx":"",
+    "shuttermanualidx":"",
+    "gammanameindex":""
+}
+*/
+
+/*
+function applyExposure() {
+    const exposureSettings = {
+        exposuremodeindex: document.getElementById("exposure-mode").value,
+        gainmanualidx: document.getElementById("gain").value,
+        irispriidx: document.getElementById("iris").value,
+        shuttermanualidx: document.getElementById("shutter").value,
+        gammanameindex: document.getElementById("gamma").value,
+        exposurelevelname: "" // Optional, leer lassen
+    };
+
+    window.electronAPI.setExposure(exposureSettings)
+        .then(response => {
+            alert(response.message);
+            console.log(response);
+        })
+        .catch(error => {
+            alert("Fehler beim Setzen der Belichtung");
+            console.error(error);
+        });
+}
+*/
 
 
 

@@ -9,8 +9,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
     enhanceZoom: (zoomLevel) => ipcRenderer.invoke("zoom-enhance", zoomLevel),
     decreaseZoom: (zoomLevel) => ipcRenderer.invoke("zoom-decrease", zoomLevel),
-    getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),
-    moveCamera: (dir) => ipcRenderer.send('move-camera', dir)
+    moveCamera: (dir) => ipcRenderer.send('move-camera', dir),
+    setExposure: (key, value) => ipcRenderer.invoke("set-exposure", key, value)
+    //getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),
     //resetZoom: (zoomLevel) => ipcRenderer.invoke("reset-zoom"),
 });
 

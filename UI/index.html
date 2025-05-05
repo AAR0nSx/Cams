@@ -1,30 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <title>Kamera-Steuerung</title>
+    <script src="./renderer.js" defer></script>
+
+    <!--Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body tabindex="0" onload="document.body.focus();">
+<body class="bg-gray-100 text-gray-900 p-6 font-sans">
 
-test 1
-<br>
-<p>Klicke einmal hier und versuche dann W/A/S/D → werden Tasten erkannt?</p>
+<div class="max-w-5xl mx-auto space-y-6">
 
-<br>
-<!--BUTTONS-->
-<br> <button onclick="moreZoomButton()">Zoom +</button>
-<br> <button onclick="lessZoomButton()">Zoom -</button>
+    <h1 class="text-3xl font-bold text-center">🎥 Kamera-Steuerung</h1>
 
-<br> <button class="direction-button" data-direction="left">Links</button>
-<br> <button class="direction-button" data-direction="right">Rechts</button>
-<br> <button class="direction-button" data-direction="up">Oben</button>
-<br> <button class="direction-button" data-direction="down">Unten</button>
-<br> <button class="direction-button" data-direction="up_left">Oben-Links</button>
-<br> <button class="direction-button" data-direction="down_left">Unten-Links</button>
-<br> <button class="direction-button" data-direction="up_right">Oben-Rechts</button>
-<br> <button class="direction-button" data-direction="down_right">Unten-Rechts</button>
-<br> <button class="direction-button" data-direction="stopMovement">    Stop</button>
+    <!--Bewegung -->
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Bewegung</h2>
+        <div class="grid grid-cols-3 gap-2 w-48 mx-auto">
+            <button class="direction-button btn" data-direction="up_left">↖︎</button>
+            <button class="direction-button btn" data-direction="up">↑</button>
+            <button class="direction-button btn" data-direction="up_right">↗︎</button>
+            <button class="direction-button btn" data-direction="left">←</button>
+            <button class="direction-button btn" data-direction="stop">⏹</button>
+            <button class="direction-button btn" data-direction="right">→</button>
+            <button class="direction-button btn" data-direction="down_left">↙︎</button>
+            <button class="direction-button btn" data-direction="down">↓</button>
+            <button class="direction-button btn" data-direction="down_right">↘︎</button>
+        </div>
+    </section>
+
+    <!--Zoom -->
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Zoom</h2>
+        <div class="flex items-center gap-4 justify-center">
+            <button class="btn" onclick="lessZoomButton()">-</button>
+            <span id="zoom-level" class="text-lg font-mono">5.0x</span>
+            <button class="btn" onclick="moreZoomButton()">+</button>
+        </div>
+    </section>
+
+    <!--Belichtung -->
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Belichtung</h2>
+        <div class="grid grid-cols-2 gap-4 max-w-md">
+            <label class="block">
+                Modus:
+                <select id="exposure-mode" class="select">
+                    <option value="auto">Auto</option>
+                    <option value="manual">Manuell</option>
+                    <option value="shutter">Shutter Priority</option>
+                    <option value="iris">Iris Priority</option>
+                </select>
+            </label>
+            <label class="block">
+                Shutter:
+                <select id="shutter" class="select">
+                    <option value="1/50">1/50</option>
+                    <option value="1/100">1/100</option>
+                    <option value="1/250">1/250</option>
+                </select>
+            </label>
+            <label class="block">
+                Gain:
+                <select id="gain" class="select">
+                    <option value="0">0dB</option>
+                    <option value="6">6dB</option>
+                    <option value="12">12dB</option>
+                    <option value="18">18dB</option>
+                </select>
+            </label>
+            <label class="block">
+                Gamma:
+                <select id="gamma" class="select">
+                    <option value="low">Low</option>
+                    <option value="mid">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </label>
+        </div>
+    </section>
+
+    <!--Status -->
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Status</h2>
+        <ul class="list-disc ml-6 text-gray-700 space-y-1">
+            <li>Zoomlevel: <span id="status-zoom">5.0</span></li>
+            <li>Bewegung: <span id="status-move">Gestoppt</span></li>
+            <li>Modus: <span id="status-mode">Manual</span></li>
+        </ul>
+    </section>
+</div>
+
+<!-- Zusatz-Tailwind Klassen für Buttons und Dropdowns -->
+<style>
+    .btn {
+        @apply bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-xl transition;
+    }
+    .select {
+        @apply w-full px-3 py-2 border border-gray-300 rounded bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400;
+    }
+</style>
 
 </body>
-<script src="./renderer.js"></script>
 </html>

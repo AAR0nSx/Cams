@@ -70,6 +70,34 @@ electronApp.on("activate", () => {
 });
 
 //IPC Handler
+
+
+//set Exposure
+ipcMain.handle("set-exposure", async (event, key, value) => {
+  const payload = {};
+  payload[key] = value;
+
+  console.log("Sende Einzelwert:", payload);
+
+  try {
+    const response = await needle("post", "http://172.23.98.93/cgi-bin/lums_ndisetexposure.cgi", JSON.stringify(payload), {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      }
+    });
+
+    return { success: true, message: `${key} gesetzt auf ${value}` };
+  } catch (error) {
+    console.error("Fehler beim Setzen:", error);
+    return { success: false, message: `Fehler bei ${key}` };
+  }
+});
+
+
+
+
 //Zoom enhance
 ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
   console.log("Zoom anpassen auf:", zoomLevel);
