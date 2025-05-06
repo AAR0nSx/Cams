@@ -47,48 +47,72 @@
             <label class="block">
                 Modus:
                 <select id="exposure-mode" class="select">
-                    <option value="auto">Auto</option>
-                    <option value="manual">Manuell</option>
-                    <option value="shutter">Shutter Priority</option>
-                    <option value="iris">Iris Priority</option>
+                    <option value="0">Full Auto</option>
+                    <option value="3">Manuell</option>
+                    <option value="1">Shutter Priority</option>
+                    <option value="2">Iris Priority</option>
                 </select>
             </label>
             <label class="block">
                 Shutter:
+                <!-- shuttermanualindex 0-21 für 1/1000 - 1/1 -->
                 <select id="shutter" class="select">
-                    <option value="1/50">1/50</option>
-                    <option value="1/100">1/100</option>
-                    <option value="1/250">1/250</option>
+                    <option value="0">1/10000</option>
+                    <option value="1">1/5000</option>
+                    <option value="2">1/3000</option>
+                    <option value="3">1/2500</option>
+                    <option value="4">1/2000</option>
+                    <option value="5">1/1500</option>
+                    <option value="6">1/1000</option>
+                    <option value="7">1/725</option>
+                    <option value="8">1/500</option>
+                    <option value="9">1/350</option>
+                    <option value="10">1/250</option>
+                    <option value="11">1/180</option>
+                    <option value="12">1/120</option>
+                    <option value="13">1/100</option>
+                    <option value="14">1/90</option>
+                    <option value="15">1/60</option>
+                    <option value="16">1/30</option>
+                    <option value="17">1/15</option>
+                    <option value="18">1/8</option>
+                    <option value="19">1/4</option>
+                    <option value="20">1/2</option>
+                    <option value="21">1/1</option>
                 </select>
             </label>
             <label class="block">
                 Gain:
+                <!--von 0 bis 45db-->
                 <select id="gain" class="select">
                     <option value="0">0dB</option>
-                    <option value="6">6dB</option>
-                    <option value="12">12dB</option>
-                    <option value="18">18dB</option>
+                    <option value="1">3dB</option>
+                    <option value="2">6dB</option>
+                    <option value="3">9dB</option>
+                    <option value="4">12dB</option>
+                    <option value="5">15dB</option>
+                    <option value="6">18dB</option>
+                    <option value="7">21dB</option>
+                    <option value="8">24dB</option>
+                    <option value="9">27dB</option>
+                    <option value="10">30dB</option>
+                    <option value="11">33dB</option>
+                    <option value="12">36dB</option>
+                    <option value="13">39dB</option>
+                    <option value="14">42dB</option>
+                    <option value="15">45dB</option>
                 </select>
             </label>
             <label class="block">
                 Gamma:
                 <select id="gamma" class="select">
-                    <option value="low">Low</option>
-                    <option value="mid">Medium</option>
-                    <option value="high">High</option>
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
                 </select>
             </label>
         </div>
-    </section>
-
-    <!--Status -->
-    <section class="bg-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Status</h2>
-        <ul class="list-disc ml-6 text-gray-700 space-y-1">
-            <li>Zoomlevel: <span id="status-zoom">5.0</span></li>
-            <li>Bewegung: <span id="status-move">Gestoppt</span></li>
-            <li>Modus: <span id="status-mode">Manual</span></li>
-        </ul>
     </section>
 </div>
 

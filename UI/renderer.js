@@ -12,7 +12,7 @@ const ZOOM_STEP_BUTTON = 1;
 
 let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
 
-//On DOM Load Fokus für Button setzen
+
 const pressedKeys = new Set();
 let lastDirection = null;
 let stopTimeout = null;
@@ -24,21 +24,28 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
+
+    window.electronAPI.getCameraData()
+        .then(data => {
+           console.log("Kameradaten werden abgerufen: ", data)
+        });
+
     // Automatisch senden bei Auswahl
     const exposureElements = [
-        { id: "exposure-mode", type: "exposuremode" },
-        { id: "shutter", type: "shutter" },
-        { id: "gain", type: "gain" },
-        { id: "gamma", type: "gamma" }
+        { id: "exposure-mode", key: "exposuremodeindex" },
+        { id: "shutter", key: "shuttermanualidx" },
+        { id: "gain", key: "gainmanualidx" },
+        { id: "gamma", key: "gammanameindex" }
     ];
 
-    exposureElements.forEach(({ id, type }) => {
+
+    exposureElements.forEach(({ id, key }) => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener("change", () => {
                 const value = el.value;
-                console.log(`Sende ${type}: ${value}`);
-                window.electronAPI.setExposure(type, value)
+                console.log(`Sende ${key}: ${value}`);
+                window.electronAPI.setExposure(key, value)
                     .then(response => {
                         console.log("Antwort:", response.message);
                     })

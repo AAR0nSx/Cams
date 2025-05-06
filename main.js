@@ -12,7 +12,7 @@ const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
 let window;
-
+let cameraIPAdress = "172.23.98.93";
 //console.log('electronApp:', electronApp);
 
 
@@ -26,7 +26,8 @@ let settings = {
 };
 
 function createWindow() {
-  const window = new electronBrowserWindow({
+ const window = new electronBrowserWindow({
+    //let window statt const. damit es global auch in ipcMain genutzt werden kann (Hauptsächlich für die Status Updates)
     x: 0,
     y: 0,
     width: 1280,
@@ -53,7 +54,6 @@ function createWindow() {
 electronApp.on("ready", () => {
   window = createWindow();
   window.webContents.openDevTools();
-  //getCameraData();
   sendSettings(settings);
 });
 
@@ -69,36 +69,89 @@ electronApp.on("activate", () => {
   }
 });
 
+
+
+
+//zieht sich alle Kameradaten
+
+function getCameraData() {
+  needle.get(
+      "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
+      function (error, response) {
+        if (!error && response.statusCode == 200) var ptzObject_temp = {};
+
+        var dom = new JSDOM(response.body);
+        var ptz_settings = response.body.split("<br>");
+
+        ptz_settings = ptz_settings.filter(function (e) {
+          return e.replace(/(\r\n|\n|\r)/gm, "");
+        });
+
+        ptz_settings.forEach(function (item, index) {
+          ptz_settings[index] = ptz_settings[index].replace(/"/g, "");
+          let temp = ptz_settings[index].split("=");
+          let tempobj = {};
+          let key = temp[0];
+          let value = temp[1];
+          tempobj[key] = value;
+          Object.assign(ptzObject_temp, tempobj);
+        });
+
+        console.log("Das ausgegebene Objekt: \n", ptzObject_temp);
+        return ptzObject_temp;
+      }
+  );
+}
+
+
+
+
+
+
+
+
 //IPC Handler
+
+//getCameraData -> führt getCameraData aus wenn das DOM geladen ist
+ipcMain.handle("get-camera-data", getCameraData);
 
 
 //set Exposure
 ipcMain.handle("set-exposure", async (event, key, value) => {
-  const payload = {};
-  payload[key] = value;
+  const payload = {"exposuremodeindex":"","exposurelevelname":"","gainmanualidx":"","irispriidx":"","shuttermanualidx":"","gammanameindex":""};
+  //shuttermanualindex 0-21 für 1/1000 - 1/1
+  const keyMap = {
+    shutter: "shuttermanualidx",
+    gain: "gainmanualidx",
+    gamma: "gammanameindex",
+    exposuremode: "exposuremodeindex"
+  };
+
+  const mappedKey = keyMap[key] || key;
+  payload[mappedKey] = value;
 
   console.log("Sende Einzelwert:", payload);
 
-  try {
-    const response = await needle("post", "http://172.23.98.93/cgi-bin/lums_ndisetexposure.cgi", JSON.stringify(payload), {
+  try{
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetexposure.cgi", {
+    method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
+      "Content-Type": "application/json"
+        //"username": "admin",
+        //"password": "admin"
+      },
+      body: JSON.stringify(payload),
     });
-
-    return { success: true, message: `${key} gesetzt auf ${value}` };
-  } catch (error) {
+    const data = await response.json();
+    console.log("Antwort von Kamera: ", data);
+    return {success: true, message: `${key} gesetzt auf ${value}` };
+  }catch(error){
     console.error("Fehler beim Setzen:", error);
     return { success: false, message: `Fehler bei ${key}` };
   }
-});
+})
 
-
-
-
-//Zoom enhance
+//Zoom enhance fetch
 ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
   console.log("Zoom anpassen auf:", zoomLevel);
 
@@ -114,12 +167,44 @@ ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
 
     const data = await response.json();
     console.log("Antwort von Kamera:", data);
+    console.log("Sende Zoom Update an Renderer: ", zoomLevel);
     return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
   } catch (error) {
     console.error("Fehler beim Zoom:", error);
     return { success: false, message: "Fehler beim Zoom" };
   }
 });
+
+/*
+//Zoom enhance needle -> geht nicht, ich lasse es drin, falls jemand Lust hat alles auf needle umzustellen
+
+ipcMain.handle("zoom-enhance", async (event, zoomLevel)=> {
+  console.log("Zoom anpassen auf: ", zoomLevel);
+
+  //Anfrage an die Kamera senden
+  try{
+    const response = await needle("post", "http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi", JSON.stringify(zoomLevel), {
+      headers: {
+        "Content-Type": "application/json",
+        "username": "admin",
+        "password": "admin"
+      },
+      body: JSON.stringify({zoompositionfromindex: zoomLevel.toString()}),
+    });
+
+    console.log("Antwort von Kamera: ", response);
+    return {success: true, message: "Zoom angepasst auf: ", zoomLevel}
+
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim Zoomen. ", error.message);
+    return {success: false, message: "Zoom fehlgeschlagen ", zoomLevel}
+  }
+
+});
+ */
+
+
 
 //Zoom decrease
 ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
@@ -137,6 +222,7 @@ ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
 
     const data = await response.json();
     console.log("Antwort von Kamera:", data);
+    console.log("Sende Zoom Update an Renderer: ", zoomLevel);
     return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
   } catch (error) {
     console.error("Fehler beim Zoom:", error);
@@ -144,311 +230,238 @@ ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
   }
 });
 
-///cgi-bin/lums_ndipantilt.cgi
 
-//dir = PT_MOTOR_RIGHT
-//dir = PT_UP_LEFT etc
-
-/*
-ipcMain.handle("move-direction", async (event, direction) => {
-  console.log("Bewege Kamera in Richtung: ", direction);
-
-  try{
-    const response = await fetch('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ direction: direction.toString() }),
-    });
-    const data = await response.json();
-    console.log("Antwort von Kamera:", data);
-    return {success: true, direction: direction.toString()};
-
-  }catch(e){
-    console.error("Fehler beim Bewegen:", e)
-    return {success: false, message: "Fehler beim Bewegen" };
-  }
-});
-*/
+//move-camera behandelt alle Bewegungsbefehle
 
 ipcMain.on('move-camera', (event, direction) => {
-
   console.log("Nachricht empfangen im main Prozess.");
 
-  //turn left
-  if (direction === 'left') {
-    const postData = JSON.stringify({
-      cmd: "PT_MOTOR_LEFT"
-    });
 
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
+  switch (direction) {
+    case "left":
+      if (direction === 'left') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_LEFT"
+        });
 
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
       }
-    });
+      break;
+
+    case "right":
+      if (direction === 'right') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_RIGHT"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "up":
+      if (direction === 'up') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_UP"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "down":
+      if (direction === 'down') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_DOWN"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "up_left":
+      if (direction === 'up_left') {
+        const postData = JSON.stringify({
+          cmd: "PT_UP_LEFT"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "up_right":
+      if (direction === 'up_right') {
+        const postData = JSON.stringify({
+          cmd: "PT_UP_RIGHT"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "down_left":
+      if (direction === 'down_left') {
+        const postData = JSON.stringify({
+          cmd: "PT_DOWN_LEFT"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "down_right":
+      if (direction === 'down_right') {
+        const postData = JSON.stringify({
+          cmd: "PT_DOWN_RIGHT"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    case "stop":
+      if (direction === 'stop') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_STOP"
+        });
+
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+            "username": "admin",
+            "password": "admin"
+          }
+        };
+
+        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", error);
+          }
+        });
+      }
+      break;
+
+    default:
+      console.log("Fehler beim Erkennen des Bewegungsbefehls.")
+      break;
   }
-  //turn right
-  if (direction === 'right') {
-    const postData = JSON.stringify({
-      cmd: "PT_MOTOR_RIGHT"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-  //turn up
-  if (direction === 'up') {
-    const postData = JSON.stringify({
-      cmd: "PT_MOTOR_UP"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-  //turn down
-  if (direction === 'down') {
-    const postData = JSON.stringify({
-      cmd: "PT_MOTOR_DOWN"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-  //STOP
-  if (direction === 'stop') {
-    const postData = JSON.stringify({
-      cmd: "PT_MOTOR_STOP"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-
-//Schräge bewegungen
-
-  if (direction === 'up_left') {
-    const postData = JSON.stringify({
-      cmd: "PT_UP_LEFT"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-
-  if (direction === 'down_left') {
-    const postData = JSON.stringify({
-      cmd: "PT_DOWN_LEFT"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-
-  if (direction === 'up_right') {
-    const postData = JSON.stringify({
-      cmd: "PT_UP_RIGHT"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-
-  if (direction === 'down_right') {
-    const postData = JSON.stringify({
-      cmd: "PT_DOWN_RIGHT"
-    });
-
-    const options = {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      }
-    };
-
-    needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
-      if (!error && response.statusCode == 200) {
-        console.log("Success:", response.body);
-      } else {
-        console.error("Request failed:", error);
-      }
-    });
-  }
-
-
 
 });
-
-
-
-
-function getCameraData() {
-  needle.get(
-    "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
-    function (error, response) {
-      if (!error && response.statusCode == 200) var ptzObject_temp = {};
-
-      var dom = new JSDOM(response.body);
-      var ptz_settings = response.body.split("<br>");
-
-      ptz_settings = ptz_settings.filter(function (e) {
-        return e.replace(/(\r\n|\n|\r)/gm, "");
-      });
-
-      ptz_settings.forEach(function (item, index) {
-        ptz_settings[index] = ptz_settings[index].replace(/"/g, "");
-        let temp = ptz_settings[index].split("=");
-        let tempobj = {};
-        let key = temp[0];
-        let value = temp[1];
-        tempobj[key] = value;
-        Object.assign(ptzObject_temp, tempobj);
-      });
-
-      return ptzObject_temp;
-    }
-  );
-}
 
 function sendSettings(settings) {
   window.webContents.send("sendSettings", settings.renderer);
   console.log("send");
 }
-
-
-
-//Exports for renderer
-/*
-module.exports = {
-
-  getCameraData: function() {
-    needle.get(
-        "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
-        function (error, response) {
-          if (!error && response.statusCode == 200) var ptzObject_temp = {};
-
-          var dom = new JSDOM(response.body);
-          var ptz_settings = response.body.split("<br>");
-
-          ptz_settings = ptz_settings.filter(function (e) {
-            return e.replace(/(\r\n|\n|\r)/gm, "");
-          });
-
-          ptz_settings.forEach(function (item, index) {
-            ptz_settings[index] = ptz_settings[index].replace(/"/g, "");
-            let temp = ptz_settings[index].split("=");
-            let tempobj = {};
-            let key = temp[0];
-            let value = temp[1];
-            tempobj[key] = value;
-            Object.assign(ptzObject_temp, tempobj);
-          });
-
-          return ptzObject_temp;
-        }
-    );
-  }
-}
-*/

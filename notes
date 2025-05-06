@@ -95,6 +95,11 @@ Stabilität:
 
  TODO
 
- - Zoom Buttons anders behandeln - vlt. ohne hold auf dem Button?
- - Oberfläche Designen (was ist wichtig?)
- - Klickproblem beim Starten durch IP-Textfeld umgehen
+JS writing an dreading files:
+
+ https://nodejs.org/en/learn/manipulating-files/writing-files-with-nodejs
+
+ https://www.w3schools.com/xml/xml_parser.asp
+
+ https://www.mediaevent.de/javascript/xml-mit-fetch.html
+
