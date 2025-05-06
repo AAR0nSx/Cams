@@ -17,6 +17,13 @@ let cameraIPAdress = "172.23.98.93";
 
 
 // Settings object
+//Die Daten aus getCameraData irgendwie extrahieren und in einzelnen Variablen speichern oder
+//jeweils eine Funktion für jede Funktionalität und benötigte Attribute?
+// --> Zoom usw. on Electron Load abfragen und einsetzen
+//let settings = getCameraData()
+
+
+/*
 let settings = {
   renderer: {
     cameraname: "Totale Cam",
@@ -24,6 +31,8 @@ let settings = {
     shuttermanualidx: "",
   },
 };
+*/
+
 
 function createWindow() {
  const window = new electronBrowserWindow({
@@ -70,10 +79,7 @@ electronApp.on("activate", () => {
 });
 
 
-
-
 //zieht sich alle Kameradaten
-
 function getCameraData() {
   needle.get(
       "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
@@ -102,10 +108,6 @@ function getCameraData() {
       }
   );
 }
-
-
-
-
 
 
 
@@ -174,37 +176,6 @@ ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
     return { success: false, message: "Fehler beim Zoom" };
   }
 });
-
-/*
-//Zoom enhance needle -> geht nicht, ich lasse es drin, falls jemand Lust hat alles auf needle umzustellen
-
-ipcMain.handle("zoom-enhance", async (event, zoomLevel)=> {
-  console.log("Zoom anpassen auf: ", zoomLevel);
-
-  //Anfrage an die Kamera senden
-  try{
-    const response = await needle("post", "http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi", JSON.stringify(zoomLevel), {
-      headers: {
-        "Content-Type": "application/json",
-        "username": "admin",
-        "password": "admin"
-      },
-      body: JSON.stringify({zoompositionfromindex: zoomLevel.toString()}),
-    });
-
-    console.log("Antwort von Kamera: ", response);
-    return {success: true, message: "Zoom angepasst auf: ", zoomLevel}
-
-  }catch(error){
-    console.error(error);
-    console.log("Fehler beim Zoomen. ", error.message);
-    return {success: false, message: "Zoom fehlgeschlagen ", zoomLevel}
-  }
-
-});
- */
-
-
 
 //Zoom decrease
 ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
