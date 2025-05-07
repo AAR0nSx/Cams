@@ -39,7 +39,7 @@ ipcMain.on('move-camera', (event, data) => {
 4. Backend main.js
 
 - empfängt steuerbefehle (vom renderer?)
-- sendet HTTP request am Kamera (über needle)
+- sendet HTTP request am Kamera (über needle oder fetch)
 - Fehlerbehandlung:
     - Kamera nicht erreichbar (Netzwerkfehler, falsche IP)
     - Kamera gibt Fehlercode zurück (404, 500)
@@ -115,3 +115,10 @@ Bei druck auf One push trigger Knopf
 Manual red und Manual Blue sind nur im manual mode verfügbar
 manual ist wbmodeidx = 5
 Slider gehen von 0 bis 128 (beide)
+
+
+Tabs für Settingspage?
+https://www.w3schools.com/howto/howto_js_tabs.asp
+
+oder hier vlt
+https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Implement_a_settings_page
