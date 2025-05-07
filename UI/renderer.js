@@ -40,7 +40,7 @@ window.addEventListener("DOMContentLoaded", () => {
         //Picture
         // Picture-Werte (Slider initialisieren und anzeigen)
         const pictureMapping = [
-            { id: "picture-brightness", key: "brightness", valueId: "value-brightness" },
+            { id: "picture-brightness", key: "brightness", valueId: "value-brightness"},
             { id: "picture-saturation", key: "saturation", valueId: "value-saturation" },
             { id: "picture-sharpness", key: "sharpness", valueId: "value-sharpness" }
         ];
@@ -49,6 +49,9 @@ window.addEventListener("DOMContentLoaded", () => {
             const el = document.getElementById(id);
             const valueDisplay = document.getElementById(valueId);
 
+            //Wenn es eine id von dem Attribut in index gibt und
+            //Wenn es eine valueId vom Attribut in index gibt und
+            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
             if (el && valueDisplay && data[key] !== undefined) {
                 // Initialwert aus Kamera setzen
                 el.value = data[key];
@@ -60,7 +63,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
 
                 // Wert bei Loslassen senden
-                el.addEventListener("change", () => {
+                el.addEventListener("input", () => { //change -> input, für direktes Feedback
                     window.electronAPI.setPicture(key, el.value)
                         .then(response => {
                             console.log(`Bildwert ${key} gesetzt:`, response.message);
@@ -226,34 +229,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-//Funktionen für Picture Slider
-/*
-function sendPictureUpdate(changedKey, value) {
-    const payload = {
-        brightness: document.getElementById("picture-brightness").value,
-        saturation: document.getElementById("picture-saturation").value,
-        sharpness: document.getElementById("picture-sharpness").value,
-        img2dnrnameindex: "",
-        img3dnrnameindex: "",
-        mirrornameidx: ""
-    };
 
-    window.electronAPI.setPicture(payload)
-        .then(response => console.log("Bildparameter gesendet:", response.message))
-        .catch(err => console.error("Fehler beim Senden:", err));
-}
-*/
-
-//EventListener für picture Slider
-/*
-document.getElementById("picture-sharpness").addEventListener("input", (e) => {
-    sendPictureUpdate("sharpness", e.target.value);
-});
-*/
 
 
 //Funktionen für Zoom
-
 
 //einheitliche Zoom Funktion -> von slider genutzt
 

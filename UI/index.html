@@ -12,7 +12,7 @@
 
 <div class="max-w-5xl mx-auto space-y-6">
 
-    <h1 class="text-3xl font-bold text-center">🎥 Kamera-Steuerung</h1>
+    <h1 class="text-3xl font-bold text-center">Kamera-Steuerung</h1>
 
     <!--Bewegung -->
     <section class="bg-white rounded-xl p-6 shadow">
@@ -120,15 +120,15 @@
         <h2 class="text-xl font-semibold mb-4">Picture</h2>
         <div class="grid grid-cols-2 gap-4 max-w-md">
             <label class="block">
-                Brightness:
+                Brightness: <span id="value-brightness" class="ml-2 font-mono"></span>
                 <input type="range" min="0" max="15" step="1" id="picture-brightness" class="w-64">
-                <span id="value-brightness" class="ml-2 font-mono"></span>
-                Saturation:
+
+                Saturation: <span id="value-saturation" class="ml-2 font-mono"></span>
                 <input type="range" min="0" max="15" step="1" id="picture-saturation" class="w-64">
-                <span id="value-saturation" class="ml-2 font-mono"></span>
-                Sharpness:
+
+                Sharpness: <span id="value-sharpness" class="ml-2 font-mono"></span>
                 <input type="range" min="0" max="14" step="1" id="picture-sharpness" class="w-64">
-                <span id="value-sharpness" class="ml-2 font-mono"></span>
+
             </label>
         </div>
     </section>

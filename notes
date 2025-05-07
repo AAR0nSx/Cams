@@ -103,3 +103,15 @@ JS writing an dreading files:
 
  https://www.mediaevent.de/javascript/xml-mit-fetch.html
 
+
+
+
+WB
+
+OnepushWb ist wbmodeidx = 3
+Bei druck auf One push trigger Knopf
+{"wbmodeidx":"","crgain":"","cbgain":"","wbonepushtrigger":"[object Event]"}
+
+Manual red und Manual Blue sind nur im manual mode verfügbar
+manual ist wbmodeidx = 5
+Slider gehen von 0 bis 128 (beide)
