@@ -63,7 +63,7 @@ function createWindow() {
 electronApp.on("ready", () => {
   window = createWindow();
   window.webContents.openDevTools();
-  sendSettings(settings);
+  //sendSettings(settings);
 });
 
 electronApp.on("window-all-closed", () => {
@@ -80,6 +80,29 @@ electronApp.on("activate", () => {
 
 
 //zieht sich alle Kameradaten
+
+function getCameraData() {
+  return new Promise((resolve, reject) => {
+    needle.get("http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi", (error, response) => {
+      if (!error && response.statusCode === 200) {
+        let ptzObject_temp = {};
+        let ptz_settings = response.body.split("<br>").map(line => line.replace(/(\r\n|\n|\r)/gm, "").replace(/"/g, ""));
+
+        ptz_settings.forEach(line => {
+          const [key, value] = line.split("=");
+          if (key && value) ptzObject_temp[key] = value;
+        });
+
+        resolve(ptzObject_temp);
+      } else {
+        reject(error || new Error("Fehler beim Abrufen der Kameradaten."));
+      }
+    });
+  });
+}
+
+
+/*
 function getCameraData() {
   needle.get(
       "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
@@ -109,13 +132,65 @@ function getCameraData() {
   );
 }
 
+*/
 
 
 
 //IPC Handler
 
 //getCameraData -> führt getCameraData aus wenn das DOM geladen ist
-ipcMain.handle("get-camera-data", getCameraData);
+//ipcMain.handle("get-camera-data", getCameraData);
+//Kameradaten zum renderer schicken
+ipcMain.handle("get-camera-data", async() => {
+  console.log("Sending camera data to renderer...");
+  try{
+    const data = await getCameraData();
+    return data;
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim Senden der Kameradaten. ", error);
+    return null;
+  }
+
+
+});
+
+
+//setPicture
+ipcMain.handle("set-picture", async (event, key, value) => {
+  const payload = {
+    brightness: "",
+    saturation: "",
+    sharpness: "",
+    img2dnrnameindex: "",
+    img3dnrnameindex: "",
+    mirrornameidx: ""
+  };
+
+  payload[key] = value;
+
+  console.log("Sende Bildwert:", payload);
+
+  try {
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpicture.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Antwort von Kamera (Picture):", data);
+    return { success: true, message: `${key} gesetzt auf ${value}` };
+  } catch (error) {
+    console.error("Fehler beim Setzen des Bildwerts:", error);
+    return { success: false, message: `Fehler bei ${key}` };
+  }
+});
+
+
+
 
 
 //set Exposure
@@ -432,7 +507,9 @@ ipcMain.on('move-camera', (event, direction) => {
 
 });
 
+/*
 function sendSettings(settings) {
   window.webContents.send("sendSettings", settings.renderer);
   console.log("send");
 }
+*/

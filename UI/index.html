@@ -37,6 +37,7 @@
             <button class="btn" onclick="lessZoomButton()">-</button>
             <span id="zoom-level" class="text-lg font-mono">5.0x</span>
             <button class="btn" onclick="moreZoomButton()">+</button>
+            <input type="range" min="0" max="36" step="1" id="zoom-slider" class="w-64">
         </div>
     </section>
 
@@ -114,7 +115,47 @@
             </label>
         </div>
     </section>
+
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Picture</h2>
+        <div class="grid grid-cols-2 gap-4 max-w-md">
+            <label class="block">
+                Brightness:
+                <input type="range" min="0" max="15" step="1" id="picture-brightness" class="w-64">
+                <span id="value-brightness" class="ml-2 font-mono"></span>
+                Saturation:
+                <input type="range" min="0" max="15" step="1" id="picture-saturation" class="w-64">
+                <span id="value-saturation" class="ml-2 font-mono"></span>
+                Sharpness:
+                <input type="range" min="0" max="14" step="1" id="picture-sharpness" class="w-64">
+                <span id="value-sharpness" class="ml-2 font-mono"></span>
+            </label>
+        </div>
+    </section>
+
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- Zusatz-Tailwind Klassen für Buttons und Dropdowns -->
 <style>

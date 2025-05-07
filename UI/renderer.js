@@ -24,13 +24,76 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
+    //aktualisieren der Werte in DOM mit den Werten aus getCameraData
+    window.electronAPI.getCameraData().then(data => {
+        console.log("Kameradaten:", data);
 
-    window.electronAPI.getCameraData()
-        .then(data => {
-           console.log("Kameradaten werden abgerufen: ", data)
+        // Zoom Level anzeigen
+        if (data.zoomposition) {
+            currentZoomLevel = parseFloat(data.zoomposition);
+            document.getElementById("zoom-level").innerText = `${currentZoomLevel.toFixed(1)}x`;
+            document.getElementById("zoom-slider").value = currentZoomLevel.toFixed(1);
+            console.log(document.getElementById("zoom-slider").value);
+        }
+
+
+        //Picture
+        // Picture-Werte (Slider initialisieren und anzeigen)
+        const pictureMapping = [
+            { id: "picture-brightness", key: "brightness", valueId: "value-brightness" },
+            { id: "picture-saturation", key: "saturation", valueId: "value-saturation" },
+            { id: "picture-sharpness", key: "sharpness", valueId: "value-sharpness" }
+        ];
+
+        pictureMapping.forEach(({ id, key, valueId }) => {
+            const el = document.getElementById(id);
+            const valueDisplay = document.getElementById(valueId);
+
+            if (el && valueDisplay && data[key] !== undefined) {
+                // Initialwert aus Kamera setzen
+                el.value = data[key];
+                valueDisplay.textContent = data[key];
+
+                // Anzeige bei Bewegung sofort aktualisieren
+                el.addEventListener("input", () => {
+                    valueDisplay.textContent = el.value;
+                });
+
+                // Wert bei Loslassen senden
+                el.addEventListener("change", () => {
+                    window.electronAPI.setPicture(key, el.value)
+                        .then(response => {
+                            console.log(`Bildwert ${key} gesetzt:`, response.message);
+                        })
+                        .catch(err => {
+                            console.error(`Fehler beim Setzen von ${key}:`, err);
+                        });
+                });
+            }
         });
 
-    // Automatisch senden bei Auswahl
+
+
+
+
+        // Belichtungseinstellungen
+        const mapping = {
+            "exposure-mode": "exposuremodeindex",
+            "shutter": "shuttermanualidx",
+            "gain": "gainmanualidx",
+            "gamma": "gammanameindex"
+        };
+
+        Object.entries(mapping).forEach(([elementId, dataKey]) => {
+            const el = document.getElementById(elementId);
+            if (el && data[dataKey] !== undefined) {
+                el.value = data[dataKey];
+            }
+        });
+    });
+
+
+    // Exposure Automatisch senden bei Auswahl
     const exposureElements = [
         { id: "exposure-mode", key: "exposuremodeindex" },
         { id: "shutter", key: "shuttermanualidx" },
@@ -163,67 +226,86 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+//Funktionen für Picture Slider
+/*
+function sendPictureUpdate(changedKey, value) {
+    const payload = {
+        brightness: document.getElementById("picture-brightness").value,
+        saturation: document.getElementById("picture-saturation").value,
+        sharpness: document.getElementById("picture-sharpness").value,
+        img2dnrnameindex: "",
+        img3dnrnameindex: "",
+        mirrornameidx: ""
+    };
 
-//Funktionen für Zoom Buttons
+    window.electronAPI.setPicture(payload)
+        .then(response => console.log("Bildparameter gesendet:", response.message))
+        .catch(err => console.error("Fehler beim Senden:", err));
+}
+*/
 
+//EventListener für picture Slider
+/*
+document.getElementById("picture-sharpness").addEventListener("input", (e) => {
+    sendPictureUpdate("sharpness", e.target.value);
+});
+*/
+
+
+//Funktionen für Zoom
+
+
+//einheitliche Zoom Funktion -> von slider genutzt
+
+function setZoomLevel(level) {
+    if (level < ZOOM_MIN) level = ZOOM_MIN;
+    if (level > ZOOM_MAX) level = ZOOM_MAX;
+
+    currentZoomLevel = level;
+    document.getElementById("zoom-level").innerText = `${level.toFixed(1)}x`;
+    document.getElementById("zoom-slider").value = level;
+
+    window.electronAPI.enhanceZoom(level)
+        .then(response => console.log(response.message))
+        .catch(error => console.error("Zoom-Fehler:", error));
+}
+
+
+//slider Event Listener für Zoom
+document.getElementById("zoom-slider").addEventListener("input", (event) => {
+    const newZoom = parseFloat(event.target.value);
+    setZoomLevel(newZoom);
+});
+
+
+//einzelne handler Funktionen für Button und Tastendruck des Zooms
 function moreZoom() {
     if (currentZoomLevel + ZOOM_STEP <= ZOOM_MAX) {
-        currentZoomLevel += ZOOM_STEP;
-        window.electronAPI.enhanceZoom(currentZoomLevel)
-            .then(response => {
-                console.log(response.message);
-            })
-            .catch(error => {
-                console.error("Zoom-Fehler:", error);
-            });
+        setZoomLevel(currentZoomLevel + ZOOM_STEP);
     } else {
         console.log("Maximaler Zoom erreicht.");
     }
-
 }
-
-function moreZoomButton() {
-    if (currentZoomLevel + ZOOM_STEP_BUTTON <= ZOOM_MAX) {
-        currentZoomLevel += ZOOM_STEP_BUTTON;
-        window.electronAPI.enhanceZoom(currentZoomLevel)
-            .then(response => {
-                console.log(response.message);
-            })
-            .catch(error => {
-                console.error("Zoom-Fehler:", error);
-            });
-    } else {
-        console.log("Maximaler Zoom erreicht.");
-    }
-
-}
-
 
 function lessZoom() {
     if (currentZoomLevel - ZOOM_STEP >= ZOOM_MIN) {
-        currentZoomLevel -= ZOOM_STEP;
-        window.electronAPI.decreaseZoom(currentZoomLevel)
-            .then(response => {
-                console.log(response.message);
-            })
-            .catch(error => {
-                console.error("Zoom-Fehler:", error);
-            });
+        setZoomLevel(currentZoomLevel - ZOOM_STEP);
     } else {
         console.log("Minimaler Zoom erreicht.");
     }
 }
 
+function moreZoomButton() {
+    if (currentZoomLevel + ZOOM_STEP_BUTTON <= ZOOM_MAX) {
+        setZoomLevel(currentZoomLevel + ZOOM_STEP_BUTTON);
+    } else {
+        console.log("Maximaler Zoom erreicht.");
+    }
+}
+
 function lessZoomButton() {
     if (currentZoomLevel - ZOOM_STEP_BUTTON >= ZOOM_MIN) {
-        currentZoomLevel -= ZOOM_STEP_BUTTON;
-        window.electronAPI.decreaseZoom(currentZoomLevel)
-            .then(response => {
-                console.log(response.message);
-            })
-            .catch(error => {
-                console.error("Zoom-Fehler:", error);
-            });
+        setZoomLevel(currentZoomLevel - ZOOM_STEP_BUTTON);
     } else {
         console.log("Minimaler Zoom erreicht.");
     }

@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     decreaseZoom: (zoomLevel) => ipcRenderer.invoke("zoom-decrease", zoomLevel),
     moveCamera: (dir) => ipcRenderer.send('move-camera', dir),
     setExposure: (key, value) => ipcRenderer.invoke("set-exposure", key, value),
+    setPicture: (key, value) => ipcRenderer.invoke("set-picture", key, value),
     getCameraData: () => ipcRenderer.invoke("get-camera-data")
 
     //getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),
