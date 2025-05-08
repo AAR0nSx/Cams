@@ -122,3 +122,17 @@ https://www.w3schools.com/howto/howto_js_tabs.asp
 
 oder hier vlt
 https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Implement_a_settings_page
+
+
+
+----------------
+// Speichern nach Fokusbewegung:
+localStorage.setItem("lastFocusMode", value); // "0" oder "1"
+localStorage.setItem("lastFocusValue", value); // z. B. 1234
+
+// Beim Start:
+const savedMode = localStorage.getItem("lastFocusMode");
+const savedFocus = localStorage.getItem("lastFocusValue");
+
+if (savedMode !== null) window.electronAPI.setFocus("focusautoidx", savedMode);
+if (savedFocus !== null) window.electronAPI.setFocus("focuspositon", savedFocus);

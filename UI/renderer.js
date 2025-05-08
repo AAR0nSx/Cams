@@ -24,19 +24,6 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
-    //data.focusautoidx: 2 oder 3 statt 0 oder 1
-    // Manueller/Auto Focus hat immer ungültigen Wert am Anfang, deshalb setz ich ihn Zwangsweise auf Auto
-    /*
-    window.electronAPI.setFocus("focusautoidx", "3")
-        .then(response => {
-            console.log("Antwort:", response.message);
-        })
-        .catch(err => {
-            console.error("Fehler:", err);
-        });
-*/
-    // --> Zwangszuweisung funktionert nicht, man muss einfach einen Wert einstellen am Anfang....
-
 
     //aktualisieren der Werte in DOM mit den Werten aus getCameraData
     window.electronAPI.getCameraData().then(data => {
@@ -51,7 +38,8 @@ window.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        //Fokus
+
+        //Fokus - Wichtig: Fokus wird default bei jedem connect auf die cam zurückgesetzt!
         //Fokus Mode aktualisieren
         //Ja du liest richtig: positon statt position.
         //Die Kamera cgi Skripte haben einen Schreibfehler und ich dachte ich habe einen Schlaganfall
