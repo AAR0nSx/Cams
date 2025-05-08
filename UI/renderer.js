@@ -24,6 +24,20 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
+    //data.focusautoidx: 2 oder 3 statt 0 oder 1
+    // Manueller/Auto Focus hat immer ungültigen Wert am Anfang, deshalb setz ich ihn Zwangsweise auf Auto
+    /*
+    window.electronAPI.setFocus("focusautoidx", "3")
+        .then(response => {
+            console.log("Antwort:", response.message);
+        })
+        .catch(err => {
+            console.error("Fehler:", err);
+        });
+*/
+    // --> Zwangszuweisung funktionert nicht, man muss einfach einen Wert einstellen am Anfang....
+
+
     //aktualisieren der Werte in DOM mit den Werten aus getCameraData
     window.electronAPI.getCameraData().then(data => {
         console.log("Kameradaten:", data);
@@ -35,6 +49,161 @@ window.addEventListener("DOMContentLoaded", () => {
             document.getElementById("zoom-slider").value = currentZoomLevel.toFixed(1);
             console.log(document.getElementById("zoom-slider").value);
         }
+
+
+        //Fokus
+        //Fokus Mode aktualisieren
+        //Ja du liest richtig: positon statt position.
+        //Die Kamera cgi Skripte haben einen Schreibfehler und ich dachte ich habe einen Schlaganfall
+        if(data.focusautoidx && data.focuspositon) {
+            console.log('Der Wert von data.focusautoidx: ', data.focusautoidx);
+            document.getElementById("focus-mode").value = data.focusautoidx;
+            console.log(`Focus Mode auf ${data.focusautoidx} initialisiert.`);
+
+            console.log('Der Wert von data.focusposition: ', data.focuspositon);
+            document.getElementById("focus-range").value = data.focuspositon;
+            console.log(`Focus Range auf ${data.focuspositon} initialisiert.`);
+        }
+
+        //Fokusmode
+        //Fokus Automatisch senden bei Auswahl
+        const focusElements = [
+            { id: "focus-mode", key: "focusautoidx" }
+        ];
+
+
+        focusElements.forEach(({ id, key }) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("change", () => {
+                    const value = el.value;
+                    console.log(`Sende ${key}: ${value}`);
+                    window.electronAPI.setFocus(key, value)
+                        .then(response => {
+                            console.log("Antwort:", response.message);
+                        })
+                        .catch(err => {
+                            console.error("Fehler:", err);
+                        });
+                });
+            }
+        });
+
+        //Fokus Slider handling
+        const focusMapping = [
+            { id: "focus-range",  key: "focuspositon",   valueId: "value-focus-range"}
+        ];
+
+        focusMapping.forEach(({ id, key, valueId }) => {
+            const el = document.getElementById(id);
+            const valueDisplay = document.getElementById(valueId);
+
+            //Wenn es eine id von dem Attribut in index gibt und
+            //Wenn es eine valueId vom Attribut in index gibt und
+            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
+            if (el && valueDisplay && data[key] !== undefined) {
+                // Initialwert aus Kamera setzen
+                el.value = data[key]; //Wert aktualisieren
+                console.log(`Der Wert ${el.value} wird auf ${data[key]} initialisiert.`);
+                valueDisplay.textContent = data[key]; //Anzeigetext aktualisieren
+                console.log(`Der Text ${valueDisplay.textContent} wird auf ${data[key]} initialisiert.`);
+
+                // Anzeige bei Bewegung sofort aktualisieren
+                // Wert senden
+                el.addEventListener("input", () => { //change -> input, für direktes Feedback
+                    valueDisplay.textContent = el.value;
+                    window.electronAPI.setFocus(key, el.value)
+                        .then(response => {
+                            console.log(`WB-Wert ${key} gesetzt:`, response.message);
+                        })
+                        .catch(err => {
+                            console.error(`Fehler beim Setzen von ${key}:`, err);
+                        });
+                });
+            }
+        });
+
+
+
+
+
+        //WB Mode aktualisieren
+        if(data.wbmodeidx) {
+            document.getElementById("wb-mode").value = data.wbmodeidx;
+            console.log(`WB Mode auf ${data.wbmodeidx} initialisiert.`);
+        }
+        //mode setzen
+        //mode Automatisch senden bei Auswahl
+        const whitebalanceElements = [
+            { id: "wb-mode", key: "wbmodeidx" },
+        ];
+
+        data.wbmodeidx === "3" ? console.log("true") : document.getElementById("onePushWBButton").disabled = true;
+
+        whitebalanceElements.forEach(({ id, key }) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("change", () => {
+                    const value = el.value;
+                    console.log(`Sende ${key}: ${value}`);
+                    //console.log(typeof document.getElementById("wb-mode").value); -> die values sind wohl strings...
+                    if(document.getElementById("wb-mode").value === "3") { //frag also nach string
+                        document.getElementById("onePushWBButton").disabled = false;
+                        console.log("Button aktiv");
+                    }else{
+                        document.getElementById("onePushWBButton").disabled = true;
+                        console.log("Button wurde disabled");
+                    }
+
+
+                    window.electronAPI.setWhiteBalance(key, value)
+                        .then(response => {
+                            console.log("Antwort:", response.message);
+                        })
+                        .catch(err => {
+                            console.error("Fehler:", err);
+                        });
+                });
+            }
+        });
+
+        //WB Slider handling
+        const whitebalanceMapping = [
+            { id: "wb-manual-red",  key: "crgain",      valueId: "value-manual-red"},
+            { id: "wb-manual-blue", key: "cbgain",      valueId: "value-manual-blue"}
+        ];
+
+        whitebalanceMapping.forEach(({ id, key, valueId }) => {
+            const el = document.getElementById(id);
+            const valueDisplay = document.getElementById(valueId);
+
+            //Wenn es eine id von dem Attribut in index gibt und
+            //Wenn es eine valueId vom Attribut in index gibt und
+            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
+            if (el && valueDisplay && data[key] !== undefined) {
+                // Initialwert aus Kamera setzen
+                el.value = data[key]; //Wert aktualisieren
+                console.log(`Der Wert ${el.value} wird auf ${data[key]} initialisiert.`);
+                valueDisplay.textContent = data[key]; //Anzeigetext aktualisieren
+                console.log(`Der Text ${valueDisplay.textContent} wird auf ${data[key]} initialisiert.`);
+
+                // Anzeige bei Bewegung sofort aktualisieren
+                // Wert senden
+                el.addEventListener("input", () => { //change -> input, für direktes Feedback
+                    valueDisplay.textContent = el.value;
+                    window.electronAPI.setWhiteBalance(key, el.value)
+                        .then(response => {
+                            console.log(`WB-Wert ${key} gesetzt:`, response.message);
+                        })
+                        .catch(err => {
+                            console.error(`Fehler beim Setzen von ${key}:`, err);
+                        });
+                });
+            }
+        });
+
+
+
 
 
         //Picture
@@ -58,12 +227,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 valueDisplay.textContent = data[key];
 
                 // Anzeige bei Bewegung sofort aktualisieren
-                el.addEventListener("input", () => {
-                    valueDisplay.textContent = el.value;
-                });
-
                 // Wert bei Loslassen senden
                 el.addEventListener("input", () => { //change -> input, für direktes Feedback
+                    valueDisplay.textContent = el.value;
                     window.electronAPI.setPicture(key, el.value)
                         .then(response => {
                             console.log(`Bildwert ${key} gesetzt:`, response.message);
@@ -74,9 +240,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             }
         });
-
-
-
 
 
         // Belichtungseinstellungen
@@ -229,6 +392,17 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+
+//One Push White balance Funktion (One Push WB Button)
+function onePushWB(){
+    const key = "wbonepushtrigger";
+    const value = "[object Event]";
+    console.log("onePushWB Funktion ausgeführt");
+    window.electronAPI.setWhiteBalance(`${key}`, `${value}`)
+        .then(response => {
+           console.log(`White Balance Wert auf ${key} gesetzt`);
+        });
+}
 
 
 

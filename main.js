@@ -9,38 +9,18 @@ const electronBrowserWindow = require("electron").BrowserWindow;
 var needle = require("needle");
 const nodePath = require("path");
 const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+//const { JSDOM } = jsdom;
 
 let window;
 let cameraIPAdress = "172.23.98.93";
 //console.log('electronApp:', electronApp);
 
-
-// Settings object
-//Die Daten aus getCameraData irgendwie extrahieren und in einzelnen Variablen speichern oder
-//jeweils eine Funktion für jede Funktionalität und benötigte Attribute?
-// --> Zoom usw. on Electron Load abfragen und einsetzen
-//let settings = getCameraData()
-
-
-/*
-let settings = {
-  renderer: {
-    cameraname: "Totale Cam",
-    gainmanualidx: "0",
-    shuttermanualidx: "",
-  },
-};
-*/
-
-
 function createWindow() {
  const window = new electronBrowserWindow({
-    //let window statt const. damit es global auch in ipcMain genutzt werden kann (Hauptsächlich für die Status Updates)
     x: 0,
     y: 0,
-    width: 1280,
-    height: 900,
+    width: 1820,
+    height: 1440,
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -101,45 +81,8 @@ function getCameraData() {
   });
 }
 
-
-/*
-function getCameraData() {
-  needle.get(
-      "http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi",
-      function (error, response) {
-        if (!error && response.statusCode == 200) var ptzObject_temp = {};
-
-        var dom = new JSDOM(response.body);
-        var ptz_settings = response.body.split("<br>");
-
-        ptz_settings = ptz_settings.filter(function (e) {
-          return e.replace(/(\r\n|\n|\r)/gm, "");
-        });
-
-        ptz_settings.forEach(function (item, index) {
-          ptz_settings[index] = ptz_settings[index].replace(/"/g, "");
-          let temp = ptz_settings[index].split("=");
-          let tempobj = {};
-          let key = temp[0];
-          let value = temp[1];
-          tempobj[key] = value;
-          Object.assign(ptzObject_temp, tempobj);
-        });
-
-        console.log("Das ausgegebene Objekt: \n", ptzObject_temp);
-        return ptzObject_temp;
-      }
-  );
-}
-
-*/
-
-
-
 //IPC Handler
 
-//getCameraData -> führt getCameraData aus wenn das DOM geladen ist
-//ipcMain.handle("get-camera-data", getCameraData);
 //Kameradaten zum renderer schicken
 ipcMain.handle("get-camera-data", async() => {
   console.log("Sending camera data to renderer...");
@@ -151,9 +94,71 @@ ipcMain.handle("get-camera-data", async() => {
     console.log("Fehler beim Senden der Kameradaten. ", error);
     return null;
   }
+});
 
+
+//setFocus
+ipcMain.handle("set-focus", async(event, key, value) => {
+  const payload = {
+    focusautoidx:"",
+    focuspositon:"",
+    afsensitivityidx:"",
+    afframenameidx:""
+  };
+
+  payload[key] = value;
+
+  try {
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetfocus.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    console.log("Antwort der Kamera: ", data);
+    return {success: true, message: "Fokus angepasst: ", data};
+
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim setzen des Fokus. ", error);
+  }
 
 });
+
+
+
+//setWB
+ipcMain.handle("set-white-balance", async(event, key, value) => {
+    const payload = {
+      wbmodeidx:"",
+      crgain:"",
+      cbgain:"",
+      wbonepushtrigger:""
+    };
+
+    payload[key] = value;
+
+    try {
+      const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetwb.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      console.log("Antwort der Kamera: ", data);
+      return {success: true, message: "Red/Blue angepasst: ", data};
+
+    }catch(error){
+      console.error(error);
+      console.log("Fehler beim setzen des Rot/Blau Werts. ", error);
+    }
+
+});
+
 
 
 //setPicture
@@ -177,7 +182,7 @@ ipcMain.handle("set-picture", async (event, key, value) => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -188,8 +193,6 @@ ipcMain.handle("set-picture", async (event, key, value) => {
     return { success: false, message: `Fehler bei ${key}` };
   }
 });
-
-
 
 
 
@@ -214,8 +217,6 @@ ipcMain.handle("set-exposure", async (event, key, value) => {
     method: "POST",
       headers: {
       "Content-Type": "application/json"
-        //"username": "admin",
-        //"password": "admin"
       },
       body: JSON.stringify(payload),
     });
@@ -292,9 +293,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -316,9 +315,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -340,9 +337,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -364,9 +359,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -388,9 +381,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -412,9 +403,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -437,8 +426,6 @@ ipcMain.on('move-camera', (event, direction) => {
         const options = {
           headers: {
             "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
           }
         };
 
@@ -460,9 +447,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -484,9 +469,7 @@ ipcMain.on('move-camera', (event, direction) => {
 
         const options = {
           headers: {
-            "Content-Type": "application/json",
-            "username": "admin",
-            "password": "admin"
+            "Content-Type": "application/json"
           }
         };
 
@@ -506,10 +489,3 @@ ipcMain.on('move-camera', (event, direction) => {
   }
 
 });
-
-/*
-function sendSettings(settings) {
-  window.webContents.send("sendSettings", settings.renderer);
-  console.log("send");
-}
-*/

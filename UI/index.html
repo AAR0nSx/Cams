@@ -43,7 +43,7 @@
 
     <!--Belichtung -->
     <section class="bg-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Belichtung</h2>
+        <h2 class="text-xl font-semibold mb-4">Exposure</h2>
         <div class="grid grid-cols-2 gap-4 max-w-md">
             <label class="block">
                 Modus:
@@ -129,6 +129,50 @@
                 Sharpness: <span id="value-sharpness" class="ml-2 font-mono"></span>
                 <input type="range" min="0" max="14" step="1" id="picture-sharpness" class="w-64">
 
+            </label>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">White Balance</h2>
+        <div class="grid grid-cols-2 gap-4 max-w-md">
+            <label class="block">
+                WB Mode:
+                <select id="wb-mode" class="select">
+                    <option value="0">Auto</option>
+                    <option value="1">Indoor</option>
+                    <option value="2">Outdoor</option>
+                    <option value="3">One Push WB</option>
+                    <option value="4">ATW</option>
+                    <option value="5">Manual</option>
+                    <option value="6">Sodium Lamp</option>
+                </select>
+                <br>
+                <button id="onePushWBButton" class="btn" onclick="onePushWB()">One Push WB</button>
+                <br>
+                <br>
+                Manual Red: <span id="value-manual-red" class="ml-2 font-mono"></span>
+                <input type="range" min="0" max="128" step="1" id="wb-manual-red" class="w-64">
+
+                Manual Blue: <span id="value-manual-blue" class="ml-2 font-mono"></span>
+                <input type="range" min="0" max="128" step="1" id="wb-manual-blue" class="w-64">
+
+            </label>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Focus</h2>
+        <div class="grid grid-cols-2 gap-4 max-w-md">
+            <label class="block">
+                Focus mode:
+                <select id="focus-mode" class="select">
+                    <option value="0">Manual</option>
+                    <option value="1">Auto</option>
+                </select>
+                <br>
+                Focus Range: <span id="value-focus-range" class="ml-2 font-mono"></span>
+                <input type="range" min="0" max="2409" step="1" id="focus-range" class="w-64">
             </label>
         </div>
     </section>
