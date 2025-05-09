@@ -9,6 +9,13 @@ const electronBrowserWindow = require("electron").BrowserWindow;
 var needle = require("needle");
 const nodePath = require("path");
 const jsdom = require("jsdom");
+
+
+//settings
+const Store = require("electron-store").default;
+const store = new Store();
+
+
 //const { JSDOM } = jsdom;
 
 let window;
@@ -82,6 +89,43 @@ function getCameraData() {
 }
 
 //IPC Handler
+
+//Settingspage oeffnen
+ipcMain.on("open-settings", () => {
+  const settingsWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    resizable: false,
+    modal: true,
+    parent: window, // das Hauptfenster ist der Parent
+    webPreferences: {
+      preload: nodePath.join(__dirname, "./preload.js"),
+      contextIsolation: true
+    }
+  });
+
+  settingsWindow.loadFile("./UI/settings.html");
+});
+
+
+//settingsHandler
+ipcMain.handle("get-settings", async () => {
+  return store.get("settings", { darkMode: false });
+});
+
+ipcMain.handle("set-settings", async (event, newSettings) => {
+  store.set("settings", newSettings);
+  console.log("SENDE UPDATE AN FENSTER:", newSettings.darkMode); // <-- wichtig
+
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send("update-dark-mode", newSettings.darkMode);
+  }
+});
+
+
+
+
+
 
 //Kameradaten zum renderer schicken
 ipcMain.handle("get-camera-data", async() => {

@@ -16,10 +16,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
     setFocus: (key, value) => ipcRenderer.invoke("set-focus", key, value),
     setPreset: (key, value) => ipcRenderer.invoke("set-preset", key, value),
     getPreset: (key, value) => ipcRenderer.invoke("get-preset", key, value),
-    getCameraData: () => ipcRenderer.invoke("get-camera-data")
+    getCameraData: () => ipcRenderer.invoke("get-camera-data"),
 
-    //getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),
-    //resetZoom: (zoomLevel) => ipcRenderer.invoke("reset-zoom"),
+    //settingspage oeffnen
+    openSettings: () => ipcRenderer.send("open-settings"),
+
+
+    //Zugriff für settings
+    getSettings: () => ipcRenderer.invoke("get-settings"),
+    setSettings: (settings) => ipcRenderer.invoke("set-settings", settings),
+
+    //sofortiges Updaten des Darkmode
+    onDarkModeUpdate: (callback) => ipcRenderer.on("update-dark-mode", (event, value) => callback(value)),
+
 
 });
 

@@ -3,12 +3,42 @@
 <head>
     <meta charset="UTF-8" />
     <title>Kamera-Steuerung</title>
+
+    <!--VOR dem laden von tailwind wird der Darkmode abgefragt-->
+    <script>
+        const settings = JSON.parse(localStorage.getItem("electron-settings"));
+        if (settings?.darkMode) {
+            document.documentElement.classList.add("dark");
+        }
+    </script>
+
     <script src="./renderer.js" defer></script>
 
-    <!--Tailwind CSS via CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Dark Mode aktivieren -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+
+
+    <script>
+        //Settings Skript
+        // Dark Mode Klasse schon beim initialen Laden setzen
+        (async () => {
+            const settings = JSON.parse(localStorage.getItem("electron-settings"));
+            if (settings?.darkMode) {
+                document.documentElement.classList.add("dark");
+            }
+        })();
+    </script>
+
+
 </head>
-<body class="bg-gray-100 text-gray-900 p-6 font-sans">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 font-sans">
 
 <div class="max-w-5xl mx-auto space-y-6">
 
@@ -196,6 +226,9 @@
 
 </div>
 
+<div class="text-center mt-4">
+    <button class="btn" onclick="window.electronAPI.openSettings()">⚙️ Einstellungen</button>
+</div>
 
 
 
@@ -220,13 +253,24 @@
 
 <!-- Zusatz-Tailwind Klassen für Buttons und Dropdowns -->
 <style>
+
     .btn {
-        @apply bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-xl transition;
+        @apply bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-xl transition dark:bg-gray-300 dark:text-black dark:hover:bg-gray-200;
     }
     .select {
-        @apply w-full px-3 py-2 border border-gray-300 rounded bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400;
+        @apply w-full px-3 py-2 border border-gray-300 rounded bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-white;
     }
+
 </style>
+
+<!--
+.btn {
+    @apply bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-xl transition;
+}
+.select {
+    @apply w-full px-3 py-2 border border-gray-300 rounded bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400;
+}
+-->
 
 </body>
 </html>

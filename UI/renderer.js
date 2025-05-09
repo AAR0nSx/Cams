@@ -24,6 +24,31 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.tabIndex = 0;
     document.body.focus();
 
+    // Direkt beim Start initialen Zustand setzen
+    window.electronAPI.getSettings().then(settings => {
+        updateDarkModeClass(settings.darkMode);
+    });
+
+    // Live-Toggle beim Event
+    window.electronAPI.onDarkModeUpdate((isDarkMode) => {
+        console.log("DARK MODE EVENT EMPFANGEN:", isDarkMode);
+        updateDarkModeClass(isDarkMode);
+    });
+
+    // Funktion zum Hinzufügen/Entfernen
+    function updateDarkModeClass(enabled) {
+        const root = document.documentElement; // <html>
+        if (enabled) {
+            root.classList.add("dark");
+        } else {
+            root.classList.remove("dark");
+        }
+    }
+
+
+
+
+
 
     //aktualisieren der Werte in DOM mit den Werten aus getCameraData
     window.electronAPI.getCameraData().then(data => {
