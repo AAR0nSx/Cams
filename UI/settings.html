@@ -3,20 +3,26 @@
 <head><title>Einstellungen</title></head>
 <body class="p-4 bg-white dark:bg-gray-800 text-black dark:text-white">
 <h2>Einstellungen</h2>
+
 <label>
     <input type="checkbox" id="darkModeToggle" /> Dark Mode aktivieren
 </label>
+<br>
+<label>
+    IP Adresse 1: <input type="textfield" id="IPAdress1" />
+</label>
+<br>
 <br>
 <button onclick="window.close()">Schließen</button>
 
 <script>
     window.addEventListener("DOMContentLoaded", async () => {
         const settings = await window.electronAPI.getSettings();
-        const toggle = document.getElementById("darkModeToggle");
-        toggle.checked = settings.darkMode;
+        const darkModetoggle = document.getElementById("darkModeToggle");
+        darkModetoggle.checked = settings.darkMode;
 
-        toggle.addEventListener("change", () => {
-            const newSettings = { darkMode: toggle.checked };
+        darkModetoggle.addEventListener("change", () => {
+            const newSettings = { darkMode: darkModetoggle.checked };
             window.electronAPI.setSettings(newSettings);
             localStorage.setItem("electron-settings", JSON.stringify(newSettings));
         });
