@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Kamera-Einstellungen</title>
+    <script>
+        const { ipcRenderer } = require('electron');
+        const fs = require('fs');
+        const path = require('path');
+        const settingsPath = path.join(require('electron').remote.app.getPath('userData'), 'cameras.json');
+
+        let cameras = [];
+
+        function loadSettings() {
+            if (fs.existsSync(settingsPath)) {
+                const raw = fs.readFileSync(settingsPath);
+                cameras = JSON.parse(raw);
+            } else {
+                cameras = [];
+            }
+            renderCameraList();
+        }
+
+        function renderCameraList() {
+            const list = document.getElementById('camera-list');
+            list.innerHTML = '';
+
+            cameras.forEach((cam, index) => {
+                const row = document.createElement('div');
+                row.classList = 'p-2 border-b flex gap-2';
+                row.innerHTML = `
+          <input type="text" placeholder="Name" value="${cam.name}" onchange="updateField(${index}, 'name', this.value)" />
+          <input type="text" placeholder="IP" value="${cam.ip}" onchange="updateField(${index}, 'ip', this.value)" />
+          <input type="text" placeholder="Benutzer" value="${cam.user}" onchange="updateField(${index}, 'user', this.value)" />
+          <input type="password" placeholder="Passwort" value="${cam.pass}" onchange="updateField(${index}, 'pass', this.value)" />
+          <button onclick="removeCamera(${index})">🗑</button>
+        `;
+                list.appendChild(row);
+            });
+        }
+
+        function updateField(index, key, value) {
+            cameras[index][key] = value;
+        }
+
+        function addCamera() {
+            cameras.push({ name: '', ip: '', user: '', pass: '' });
+            renderCameraList();
+        }
+
+        function removeCamera(index) {
+            cameras.splice(index, 1);
+            renderCameraList();
+        }
+
+        function saveSettings() {
+            fs.writeFileSync(settingsPath, JSON.stringify(cameras, null, 2));
+            alert('Gespeichert');
+        }
+
+        window.onload = loadSettings;
+    </script>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        input { padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 0.5rem 1rem; margin-top: 1rem; background: #333; color: white; border: none; border-radius: 4px; }
+        .camera-entry { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+<h1>Kamera Einstellungen</h1>
+<div id="camera-list"></div>
+<button onclick="addCamera()">+ Kamera hinzufügen</button>
+<button onclick="saveSettings()">💾 Speichern</button>
+</body>
+</html>
