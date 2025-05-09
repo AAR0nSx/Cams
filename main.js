@@ -19,8 +19,8 @@ function createWindow() {
  const window = new electronBrowserWindow({
     x: 0,
     y: 0,
-    width: 1820,
-    height: 1440,
+    width: 1920,
+    height: 1080,
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -95,6 +95,53 @@ ipcMain.handle("get-camera-data", async() => {
     return null;
   }
 });
+
+
+//setPreset
+ipcMain.handle("set-preset", async (event, presetNumber, settings) => {
+  const payload = {
+    savepreset: presetNumber,
+    settings: settings // wird später nicht direkt verarbeitet, aber mitgeschickt
+  };
+
+  try {
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpreset.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return { success: true, message: `Preset ${presetNumber} gespeichert`, data };
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    return { success: false, message: "Fehler beim Speichern", error };
+  }
+});
+
+//getPreset
+ipcMain.handle("get-preset", async (event, presetNumber) => {
+  const payload = {
+    loadpreset: presetNumber
+  };
+
+  try {
+    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpreset.cgi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return { success: true, message: `Preset ${presetNumber} geladen`, data };
+  } catch (error) {
+    console.error("Fehler beim Laden:", error);
+    return { success: false, message: "Fehler beim Laden", error };
+  }
+});
+
 
 
 //setFocus

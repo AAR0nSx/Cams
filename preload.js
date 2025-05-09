@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     setPicture: (key, value) => ipcRenderer.invoke("set-picture", key, value),
     setWhiteBalance: (key, value) => ipcRenderer.invoke("set-white-balance", key, value),
     setFocus: (key, value) => ipcRenderer.invoke("set-focus", key, value),
+    setPreset: (key, value) => ipcRenderer.invoke("set-preset", key, value),
+    getPreset: (key, value) => ipcRenderer.invoke("get-preset", key, value),
     getCameraData: () => ipcRenderer.invoke("get-camera-data")
 
     //getCurrentZoom: (zoomLevel) => ipcRenderer.invoke("get-current-zoom"),

@@ -136,3 +136,57 @@ const savedFocus = localStorage.getItem("lastFocusValue");
 
 if (savedMode !== null) window.electronAPI.setFocus("focusautoidx", savedMode);
 if (savedFocus !== null) window.electronAPI.setFocus("focuspositon", savedFocus);
+
+
+
+
+In JavaScript, localStorage ist ein Speicher, in dem Daten im Browser des Benutzers gespeichert werden können, ohne
+ dass sie beim Schließen des Browsers gelöscht werden. setItem() speichert Daten mit einem Schlüssel und Wert,
+ während getItem() gespeicherte Daten anhand des Schlüssels abruft.
+
+setItem():
+Syntax: localStorage.setItem(key, value);
+Funktion: Speichert einen Wert (das Argument value) unter einem bestimmten Schlüssel (das Argument key) im localStorage.
+Wenn ein Schlüssel bereits existiert, wird der Wert aktualisiert.
+Beispiel: localStorage.setItem("username", "MaxMustermann"); speichert den Wert "MaxMustermann" unter dem
+Schlüssel "username".
+
+getItem():
+Syntax: localStorage.getItem(key);
+Funktion: Ruft den Wert aus dem localStorage ab, der mit dem angegebenen Schlüssel (das Argument key) verknüpft ist.
+Beispiel: let username = localStorage.getItem("username"); speichert den Wert, der unter dem Schlüssel
+"username" gespeichert ist, in der Variable username.
+
+Zusätzliche Informationen:
+Datenspeicherung: localStorage speichert Daten als Key-Value-Paare (Schlüssel-Wert).
+Datentyp: Sowohl Schlüssel als auch Werte sind Strings.
+Domain: Die Daten im localStorage sind domain-spezifisch, d.h. Daten, die auf einer Seite gespeichert werden,
+sind nur für diese Seite und Unterseiten der gleichen Domain zugänglich.
+Löschen: removeItem() entfernt ein Element aus dem localStorage. clear() löscht alle Daten aus dem localStorage.
+Session Storage: Es gibt auch sessionStorage, das Daten nur während der Sitzung des Benutzers
+(d.h. bis der Browser geschlossen wird) speichert.
+
+
+
+
+Daten die geladen/gespeichert werden müssen:
+ids der DOM Elemente:
+
+zoom-level
+zoom-slider
+
+focus-mode
+focus-range
+
+wb-mode
+wb-manual-red
+wb-manual-blue
+
+picture-brightness
+picture-saturation
+picture-sharpness
+
+exposure-mode
+shutter
+gain
+gamma
