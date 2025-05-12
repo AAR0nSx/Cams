@@ -3,6 +3,8 @@
 * Steuert Eletron
 */
 
+//172.23.98.93
+
 const { app, BrowserWindow, ipcMain } = require("electron");
 const electronApp = require("electron").app;
 const electronBrowserWindow = require("electron").BrowserWindow;
@@ -88,19 +90,21 @@ function getCameraData() {
   });
 }
 
+
+
 //IPC Handler
 
 //Settingspage oeffnen
 ipcMain.on("open-settings", () => {
   const settingsWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: 720,
+    height: 480,
     resizable: false,
-    modal: true,
+    modal: true, //Child window das parent window disabled solange es offen ist
     parent: window, // das Hauptfenster ist der Parent
     webPreferences: {
-      preload: nodePath.join(__dirname, "./preload.js"),
-      contextIsolation: true
+      contextIsolation: true,
+      preload: nodePath.join(__dirname, "./preload.js")
     }
   });
 
@@ -119,6 +123,7 @@ ipcMain.handle("set-settings", async (event, newSettings) => {
 
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send("update-dark-mode", newSettings.darkMode);
+    window.webContents.send("update-camera-uis");
   }
 });
 
@@ -128,6 +133,26 @@ ipcMain.handle("set-settings", async (event, newSettings) => {
 
 
 //Kameradaten zum renderer schicken
+ipcMain.handle("get-camera-data", async (event, ip) => {
+  const url = `http://${ip}/cgi-bin/lums_ndisetinfo.cgi`;
+  try {
+    const response = await needle("get", url);
+    if (response.statusCode === 200) {
+      const ptzObject = {};
+      response.body.split("<br>").forEach(line => {
+        const [key, value] = line.split("=");
+        if (key && value) ptzObject[key.replace(/"/g, "")] = value.replace(/"/g, "");
+      });
+      return ptzObject;
+    } else {
+      throw new Error(`Status ${response.statusCode}`);
+    }
+  } catch (err) {
+    console.error("Fehler für Kamera", ip, err);
+    return null;
+  }
+});
+/*
 ipcMain.handle("get-camera-data", async() => {
   console.log("Sending camera data to renderer...");
   try{
@@ -139,17 +164,17 @@ ipcMain.handle("get-camera-data", async() => {
     return null;
   }
 });
-
+*/
 
 //setPreset
-ipcMain.handle("set-preset", async (event, presetNumber, settings) => {
+ipcMain.handle("set-preset", async (event, presetNumber, settings, ip) => {
   const payload = {
     savepreset: presetNumber,
     settings: settings // wird später nicht direkt verarbeitet, aber mitgeschickt
   };
 
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpreset.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpreset.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -159,19 +184,19 @@ ipcMain.handle("set-preset", async (event, presetNumber, settings) => {
     const data = await response.json();
     return { success: true, message: `Preset ${presetNumber} gespeichert`, data };
   } catch (error) {
-    console.error("Fehler beim Speichern:", error);
+    console.error("Fehler beim Speichern:", ip,  error);
     return { success: false, message: "Fehler beim Speichern", error };
   }
 });
 
 //getPreset
-ipcMain.handle("get-preset", async (event, presetNumber) => {
+ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
   const payload = {
     loadpreset: presetNumber
   };
 
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpreset.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpreset.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -181,7 +206,7 @@ ipcMain.handle("get-preset", async (event, presetNumber) => {
     const data = await response.json();
     return { success: true, message: `Preset ${presetNumber} geladen`, data };
   } catch (error) {
-    console.error("Fehler beim Laden:", error);
+    console.error("Fehler beim Laden:", ip, error);
     return { success: false, message: "Fehler beim Laden", error };
   }
 });
@@ -189,7 +214,7 @@ ipcMain.handle("get-preset", async (event, presetNumber) => {
 
 
 //setFocus
-ipcMain.handle("set-focus", async(event, key, value) => {
+ipcMain.handle("set-focus", async(event, key, value, ip) => {
   const payload = {
     focusautoidx:"",
     focuspositon:"",
@@ -200,7 +225,7 @@ ipcMain.handle("set-focus", async(event, key, value) => {
   payload[key] = value;
 
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetfocus.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetfocus.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -213,7 +238,7 @@ ipcMain.handle("set-focus", async(event, key, value) => {
 
   }catch(error){
     console.error(error);
-    console.log("Fehler beim setzen des Fokus. ", error);
+    console.log("Fehler beim setzen des Fokus. ", ip,  error);
   }
 
 });
@@ -221,7 +246,7 @@ ipcMain.handle("set-focus", async(event, key, value) => {
 
 
 //setWB
-ipcMain.handle("set-white-balance", async(event, key, value) => {
+ipcMain.handle("set-white-balance", async(event, key, value, ip) => {
     const payload = {
       wbmodeidx:"",
       crgain:"",
@@ -232,7 +257,7 @@ ipcMain.handle("set-white-balance", async(event, key, value) => {
     payload[key] = value;
 
     try {
-      const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetwb.cgi", {
+      const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetwb.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -245,7 +270,7 @@ ipcMain.handle("set-white-balance", async(event, key, value) => {
 
     }catch(error){
       console.error(error);
-      console.log("Fehler beim setzen des Rot/Blau Werts. ", error);
+      console.log("Fehler beim setzen des Rot/Blau Werts. ", ip, error);
     }
 
 });
@@ -253,7 +278,7 @@ ipcMain.handle("set-white-balance", async(event, key, value) => {
 
 
 //setPicture
-ipcMain.handle("set-picture", async (event, key, value) => {
+ipcMain.handle("set-picture", async (event, key, value, ip) => {
   const payload = {
     brightness: "",
     saturation: "",
@@ -268,7 +293,7 @@ ipcMain.handle("set-picture", async (event, key, value) => {
   console.log("Sende Bildwert:", payload);
 
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetpicture.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpicture.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -280,7 +305,7 @@ ipcMain.handle("set-picture", async (event, key, value) => {
     console.log("Antwort von Kamera (Picture):", data);
     return { success: true, message: `${key} gesetzt auf ${value}` };
   } catch (error) {
-    console.error("Fehler beim Setzen des Bildwerts:", error);
+    console.error("Fehler beim Setzen des Bildwerts:", ip, error);
     return { success: false, message: `Fehler bei ${key}` };
   }
 });
@@ -288,7 +313,7 @@ ipcMain.handle("set-picture", async (event, key, value) => {
 
 
 //set Exposure
-ipcMain.handle("set-exposure", async (event, key, value) => {
+ipcMain.handle("set-exposure", async (event, key, value, ip) => {
   const payload = {"exposuremodeindex":"","exposurelevelname":"","gainmanualidx":"","irispriidx":"","shuttermanualidx":"","gammanameindex":""};
   //shuttermanualindex 0-21 für 1/1000 - 1/1
   const keyMap = {
@@ -304,7 +329,7 @@ ipcMain.handle("set-exposure", async (event, key, value) => {
   console.log("Sende Einzelwert:", payload);
 
   try{
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetexposure.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetexposure.cgi`, {
     method: "POST",
       headers: {
       "Content-Type": "application/json"
@@ -315,18 +340,18 @@ ipcMain.handle("set-exposure", async (event, key, value) => {
     console.log("Antwort von Kamera: ", data);
     return {success: true, message: `${key} gesetzt auf ${value}` };
   }catch(error){
-    console.error("Fehler beim Setzen:", error);
+    console.error("Fehler beim Setzen:", ip, error);
     return { success: false, message: `Fehler bei ${key}` };
   }
 })
 
 //Zoom enhance fetch
-ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
+ipcMain.handle("zoom-enhance", async (event, zoomLevel, ip) => {
   console.log("Zoom anpassen auf:", zoomLevel);
 
   // Anfrage an Kamera senden
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetzoom.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -339,18 +364,18 @@ ipcMain.handle("zoom-enhance", async (event, zoomLevel) => {
     console.log("Sende Zoom Update an Renderer: ", zoomLevel);
     return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
   } catch (error) {
-    console.error("Fehler beim Zoom:", error);
+    console.error("Fehler beim Zoom:", ip, error);
     return { success: false, message: "Fehler beim Zoom" };
   }
 });
 
 //Zoom decrease
-ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
+ipcMain.handle("zoom-decrease", async (event, zoomLevel, ip) => {
   console.log("Zoom anpassen auf:", zoomLevel);
 
   // Anfrage an Kamera senden
   try {
-    const response = await fetch("http://172.23.98.93/cgi-bin/lums_ndisetzoom.cgi", {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetzoom.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -363,7 +388,7 @@ ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
     console.log("Sende Zoom Update an Renderer: ", zoomLevel);
     return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
   } catch (error) {
-    console.error("Fehler beim Zoom:", error);
+    console.error("Fehler beim Zoom:", ip, error);
     return { success: false, message: "Fehler beim Zoom" };
   }
 });
@@ -371,7 +396,7 @@ ipcMain.handle("zoom-decrease", async (event, zoomLevel) => {
 
 //move-camera behandelt alle Bewegungsbefehle
 
-ipcMain.on('move-camera', (event, direction) => {
+ipcMain.on('move-camera', (event, direction, ip) => {
   console.log("Nachricht empfangen im main Prozess.");
 
 
@@ -388,11 +413,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -410,11 +435,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -432,11 +457,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -454,11 +479,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -476,11 +501,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -498,11 +523,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -520,11 +545,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -542,11 +567,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }
@@ -564,11 +589,11 @@ ipcMain.on('move-camera', (event, direction) => {
           }
         };
 
-        needle.post('http://172.23.98.93/cgi-bin/lums_ndipantilt.cgi', postData, options, function (error, response) {
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
           if (!error && response.statusCode == 200) {
             console.log("Success:", response.body);
           } else {
-            console.error("Request failed:", error);
+            console.error("Request failed:", ip, error);
           }
         });
       }

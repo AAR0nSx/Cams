@@ -20,398 +20,240 @@ let zoomInterval = null;
 
 
 
-window.addEventListener("DOMContentLoaded", () => {
-    document.body.tabIndex = 0;
-    document.body.focus();
+window.addEventListener("DOMContentLoaded", async () => {
+    const settings = await window.electronAPI.getSettings();
+    updateDarkModeClass(settings.darkMode);
 
-    // Direkt beim Start initialen Zustand setzen
-    window.electronAPI.getSettings().then(settings => {
-        updateDarkModeClass(settings.darkMode);
+    const container = document.getElementById("camera-container");
+    const template = document.getElementById("camera-template");
+
+    // Kamera-UIs anzeigen
+    renderCameraUIs(settings.cameraIPs || []);
+
+    // Wenn Dark Mode sich später ändert
+    window.electronAPI.onDarkModeUpdate(updateDarkModeClass);
+
+    // Wenn Kamera-UI aktualisiert werden soll
+    window.electronAPI.onUpdateCameraUIs(async () => {
+        const latest = await window.electronAPI.getSettings();
+        renderCameraUIs(latest.cameraIPs || []);
     });
 
-    // Live-Toggle beim Event
-    window.electronAPI.onDarkModeUpdate((isDarkMode) => {
-        console.log("DARK MODE EVENT EMPFANGEN:", isDarkMode);
-        updateDarkModeClass(isDarkMode);
-    });
-
-    // Funktion zum Hinzufügen/Entfernen
     function updateDarkModeClass(enabled) {
-        const root = document.documentElement; // <html>
-        if (enabled) {
-            root.classList.add("dark");
-        } else {
-            root.classList.remove("dark");
-        }
+        document.documentElement.classList.toggle("dark", enabled);
     }
 
-
-
-
-
-
-    //aktualisieren der Werte in DOM mit den Werten aus getCameraData
-    window.electronAPI.getCameraData().then(data => {
-        console.log("Kameradaten:", data);
-
-        // Zoom Level anzeigen
-        if (data.zoomposition) {
-            currentZoomLevel = parseFloat(data.zoomposition);
-            document.getElementById("zoom-level").innerText = `${currentZoomLevel.toFixed(1)}x`;
-            document.getElementById("zoom-slider").value = currentZoomLevel.toFixed(1);
-            console.log(document.getElementById("zoom-slider").value);
-        }
-
-
-
-        //Fokus - Wichtig: Fokus wird default bei jedem connect auf die cam zurückgesetzt!
-        //Fokus Mode aktualisieren
-        //Ja du liest richtig: positon statt position.
-        //Die Kamera cgi Skripte haben einen Schreibfehler und ich dachte ich habe einen Schlaganfall
-        if(data.focusautoidx && data.focuspositon) {
-            console.log('Der Wert von data.focusautoidx: ', data.focusautoidx);
-            console.log(`Focus Mode als ${data.focusautoidx} ausgelesen.`);
-            document.getElementById("focus-mode").value = "1";
-            console.log(`Focus Mode manuell auf ${document.getElementById("focus-mode").value} gesetzt.`);
-
-
-            console.log('Der Wert von data.focusposition: ', data.focuspositon);
-            document.getElementById("focus-range").value = data.focuspositon;
-            console.log(`Focus Range als ${data.focuspositon} ausgelesen.`);
-        }
-
-        //Fokusmode
-        //Fokus Automatisch senden bei Auswahl
-        const focusElements = [
-            { id: "focus-mode", key: "focusautoidx" }
-        ];
-
-
-        focusElements.forEach(({ id, key }) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener("change", () => {
-                    const value = el.value;
-                    console.log(`Sende ${key}: ${value}`);
-                    window.electronAPI.setFocus(key, value)
-                        .then(response => {
-                            console.log("Antwort:", response.message);
-                        })
-                        .catch(err => {
-                            console.error("Fehler:", err);
-                        });
-                });
-            }
+    function renderCameraUIs(cameraIPs) {
+        container.innerHTML = ""; // Alte UIs entfernen
+        cameraIPs.forEach((ip, index) => {
+            const clone = template.content.cloneNode(true);
+            const wrapper = clone.querySelector(".camera-ui");
+            wrapper.dataset.ip = ip;
+            wrapper.querySelector(".camera-label").textContent = `Kamera ${index + 1} (${ip})`;
+            container.appendChild(wrapper);
+            initCameraUI(wrapper, ip);
         });
-
-        //Fokus Slider handling
-        const focusMapping = [
-            { id: "focus-range",  key: "focuspositon",   valueId: "value-focus-range"}
-        ];
-
-        focusMapping.forEach(({ id, key, valueId }) => {
-            const el = document.getElementById(id);
-            const valueDisplay = document.getElementById(valueId);
-
-            //Wenn es eine id von dem Attribut in index gibt und
-            //Wenn es eine valueId vom Attribut in index gibt und
-            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
-            if (el && valueDisplay && data[key] !== undefined) {
-                // Initialwert aus Kamera setzen
-                el.value = data[key]; //Wert aktualisieren
-                console.log(`Der Wert ${el.value} wird auf ${data[key]} initialisiert.`);
-                valueDisplay.textContent = data[key]; //Anzeigetext aktualisieren
-                console.log(`Der Text ${valueDisplay.textContent} wird auf ${data[key]} initialisiert.`);
-
-                // Anzeige bei Bewegung sofort aktualisieren
-                // Wert senden
-                el.addEventListener("input", () => { //change -> input, für direktes Feedback
-                    valueDisplay.textContent = el.value;
-                    window.electronAPI.setFocus(key, el.value)
-                        .then(response => {
-                            console.log(`WB-Wert ${key} gesetzt:`, response.message);
-                        })
-                        .catch(err => {
-                            console.error(`Fehler beim Setzen von ${key}:`, err);
-                        });
-                });
-            }
-        });
-
-
-
-
-
-        //WB Mode aktualisieren
-        if(data.wbmodeidx) {
-            document.getElementById("wb-mode").value = data.wbmodeidx;
-            console.log(`WB Mode auf ${data.wbmodeidx} initialisiert.`);
-        }
-        //mode setzen
-        //mode Automatisch senden bei Auswahl
-        const whitebalanceElements = [
-            { id: "wb-mode", key: "wbmodeidx" },
-        ];
-
-        data.wbmodeidx === "3" ? console.log("true") : document.getElementById("onePushWBButton").disabled = true;
-
-        whitebalanceElements.forEach(({ id, key }) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener("change", () => {
-                    const value = el.value;
-                    console.log(`Sende ${key}: ${value}`);
-                    //console.log(typeof document.getElementById("wb-mode").value); -> die values sind wohl strings...
-                    if(document.getElementById("wb-mode").value === "3") { //frag also nach string
-                        document.getElementById("onePushWBButton").disabled = false;
-                        console.log("Button aktiv");
-                    }else{
-                        document.getElementById("onePushWBButton").disabled = true;
-                        console.log("Button wurde disabled");
-                    }
-
-
-                    window.electronAPI.setWhiteBalance(key, value)
-                        .then(response => {
-                            console.log("Antwort:", response.message);
-                        })
-                        .catch(err => {
-                            console.error("Fehler:", err);
-                        });
-                });
-            }
-        });
-
-        //WB Slider handling
-        const whitebalanceMapping = [
-            { id: "wb-manual-red",  key: "crgain",      valueId: "value-manual-red"},
-            { id: "wb-manual-blue", key: "cbgain",      valueId: "value-manual-blue"}
-        ];
-
-        whitebalanceMapping.forEach(({ id, key, valueId }) => {
-            const el = document.getElementById(id);
-            const valueDisplay = document.getElementById(valueId);
-
-            //Wenn es eine id von dem Attribut in index gibt und
-            //Wenn es eine valueId vom Attribut in index gibt und
-            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
-            if (el && valueDisplay && data[key] !== undefined) {
-                // Initialwert aus Kamera setzen
-                el.value = data[key]; //Wert aktualisieren
-                console.log(`Der Wert ${el.value} wird auf ${data[key]} initialisiert.`);
-                valueDisplay.textContent = data[key]; //Anzeigetext aktualisieren
-                console.log(`Der Text ${valueDisplay.textContent} wird auf ${data[key]} initialisiert.`);
-
-                // Anzeige bei Bewegung sofort aktualisieren
-                // Wert senden
-                el.addEventListener("input", () => { //change -> input, für direktes Feedback
-                    valueDisplay.textContent = el.value;
-                    window.electronAPI.setWhiteBalance(key, el.value)
-                        .then(response => {
-                            console.log(`WB-Wert ${key} gesetzt:`, response.message);
-                        })
-                        .catch(err => {
-                            console.error(`Fehler beim Setzen von ${key}:`, err);
-                        });
-                });
-            }
-        });
-
-
-
-
-
-        //Picture
-        // Picture-Werte (Slider initialisieren und anzeigen)
-        const pictureMapping = [
-            { id: "picture-brightness", key: "brightness", valueId: "value-brightness"},
-            { id: "picture-saturation", key: "saturation", valueId: "value-saturation" },
-            { id: "picture-sharpness", key: "sharpness", valueId: "value-sharpness" }
-        ];
-
-        pictureMapping.forEach(({ id, key, valueId }) => {
-            const el = document.getElementById(id);
-            const valueDisplay = document.getElementById(valueId);
-
-            //Wenn es eine id von dem Attribut in index gibt und
-            //Wenn es eine valueId vom Attribut in index gibt und
-            //Wenn der key in data (Ergebnisse aus getCameraData) existiert
-            if (el && valueDisplay && data[key] !== undefined) {
-                // Initialwert aus Kamera setzen
-                el.value = data[key];
-                valueDisplay.textContent = data[key];
-
-                // Anzeige bei Bewegung sofort aktualisieren
-                // Wert bei Loslassen senden
-                el.addEventListener("input", () => { //change -> input, für direktes Feedback
-                    valueDisplay.textContent = el.value;
-                    window.electronAPI.setPicture(key, el.value)
-                        .then(response => {
-                            console.log(`Bildwert ${key} gesetzt:`, response.message);
-                        })
-                        .catch(err => {
-                            console.error(`Fehler beim Setzen von ${key}:`, err);
-                        });
-                });
-            }
-        });
-
-
-        // Belichtungseinstellungen
-        const mapping = {
-            "exposure-mode": "exposuremodeindex",
-            "shutter": "shuttermanualidx",
-            "gain": "gainmanualidx",
-            "gamma": "gammanameindex"
-        };
-
-        Object.entries(mapping).forEach(([elementId, dataKey]) => {
-            const el = document.getElementById(elementId);
-            if (el && data[dataKey] !== undefined) {
-                el.value = data[dataKey];
-            }
-        });
-    });
-
-
-    // Exposure Automatisch senden bei Auswahl
-    const exposureElements = [
-        { id: "exposure-mode", key: "exposuremodeindex" },
-        { id: "shutter", key: "shuttermanualidx" },
-        { id: "gain", key: "gainmanualidx" },
-        { id: "gamma", key: "gammanameindex" }
-    ];
-
-
-    exposureElements.forEach(({ id, key }) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener("change", () => {
-                const value = el.value;
-                console.log(`Sende ${key}: ${value}`);
-                window.electronAPI.setExposure(key, value)
-                    .then(response => {
-                        console.log("Antwort:", response.message);
-                    })
-                    .catch(err => {
-                        console.error("Fehler:", err);
-                    });
-            });
-        }
-    });
-
-
-    //BUTTONS
-    const buttons = document.querySelectorAll(".direction-button");
-
-    buttons.forEach(button => {
-        const direction = button.dataset.direction;
-
-        button.addEventListener("mousedown", () => {
-            window.electronAPI.moveCamera(direction);
-            console.log("Kamera bewegt sich:", direction);
-        });
-
-        const stopMovement = () => {
-            window.electronAPI.moveCamera("stop");
-            console.log("Kamera gestoppt");
-        };
-
-        button.addEventListener("mouseup", stopMovement);
-        button.addEventListener("mouseleave", stopMovement);
-    });
-
-    //KEYS
-    document.addEventListener("keydown", (event) => {
-        if (!event.repeat) {
-            // ZOOM IN (+)
-            if (event.code === "BracketRight") {
-                if (!zoomInterval) {
-                    zoomInterval = setInterval(() => {
-                        moreZoom();
-                        console.log("Zooming in...");
-                    }, 0);
-                }
-                return;
-            }
-
-            // ZOOM OUT (-)
-            if (event.code === "Slash") {
-                if (!zoomInterval) {
-                    zoomInterval = setInterval(() => {
-                        lessZoom();
-                        console.log("Zooming out...");
-                    }, 0);
-                }
-                return;
-            }
-
-            pressedKeys.add(event.code);
-            handleCombinedDirection();
-        }
-    });
-
-    document.addEventListener("keyup", (event) => {
-        // Zoom beenden
-        if (
-            event.code === "BracketRight" ||
-            event.code === "Slash"
-        ) {
-            if (zoomInterval) {
-                clearInterval(zoomInterval);
-                zoomInterval = null;
-                console.log("Zoom gestoppt");
-            }
-            return;
-        }
-
-        pressedKeys.delete(event.code);
-
-        if (pressedKeys.size === 0) {
-            if (stopTimeout) clearTimeout(stopTimeout);
-            stopTimeout = setTimeout(() => {
-                window.electronAPI.moveCamera("stop");
-                lastDirection = null;
-                console.log("Kamera gestoppt");
-            }, 400);
-        } else {
-            handleCombinedDirection();
-        }
-    });
-
-    function handleCombinedDirection() {
-        const direction = getCombinedDirection(Array.from(pressedKeys));
-        if (direction && direction !== lastDirection) {
-            window.electronAPI.moveCamera(direction);
-            lastDirection = direction;
-            console.log("Bewege Kamera:", direction);
-        }
-    }
-
-    function getCombinedDirection(codes) {
-        const keys = new Set(codes);
-        const up = keys.has("ArrowUp");
-        const down = keys.has("ArrowDown");
-        const left = keys.has("ArrowLeft");
-        const right = keys.has("ArrowRight");
-
-        if (up && left) return "up_left";
-        if (up && right) return "up_right";
-        if (down && left) return "down_left";
-        if (down && right) return "down_right";
-        if (up) return "up";
-        if (down) return "down";
-        if (left) return "left";
-        if (right) return "right";
-        return null;
     }
 });
+
+
+//UI neu bauen bei speichern
+window.electronAPI.onUpdateCameraUIs(() => {
+    console.log("Empfange update-camera-uis Event");
+    refreshCameraUIs();
+});
+
+//refresh Camera UIs
+async function refreshCameraUIs() {
+    const container = document.getElementById("camera-container");
+    container.innerHTML = ""; // Alte UIs entfernen
+
+    const settings = await window.electronAPI.getSettings();
+    const cameraIPs = settings.cameraIPs || [];
+    const template = document.getElementById("camera-template");
+
+    cameraIPs.forEach((ip, index) => {
+        const clone = template.content.cloneNode(true);
+        const wrapper = clone.querySelector(".camera-ui");
+        wrapper.dataset.ip = ip;
+        wrapper.querySelector(".camera-label").textContent = `Kamera ${index + 1} (${ip})`;
+
+        container.appendChild(wrapper);
+        initCameraUI(wrapper, ip);
+    });
+}
+
+
+
+//init Camera UI
+function initCameraUI(wrapper, ip) {
+    console.log(`Initialisiere Kamera-UI für ${ip}`);
+
+    // Kamera-Daten holen
+    window.electronAPI.getCameraData(ip).then(data => {
+        console.log(`[${ip}] Kameradaten:`, data);
+
+        // Zoom
+        const zoomLevelEl = wrapper.querySelector(".zoom-level");
+        const zoomSlider = wrapper.querySelector(".zoom-slider");
+        let currentZoom = parseFloat(data.zoomposition || 0);
+
+        const updateZoom = (value) => {
+            currentZoom = Math.max(0, Math.min(36, value));
+            zoomLevelEl.textContent = `${currentZoom.toFixed(1)}x`;
+            zoomSlider.value = currentZoom;
+
+            window.electronAPI.enhanceZoom(currentZoom, ip);
+        };
+
+        zoomSlider.value = currentZoom;
+        zoomLevelEl.textContent = `${currentZoom.toFixed(1)}x`;
+
+        zoomSlider.addEventListener("input", () => updateZoom(parseFloat(zoomSlider.value)));
+        wrapper.querySelector(".zoom-in").addEventListener("click", () => updateZoom(currentZoom + 1));
+        wrapper.querySelector(".zoom-out").addEventListener("click", () => updateZoom(currentZoom - 1));
+
+        // Fokus
+        const focusModeEl = wrapper.querySelector(".focus-mode");
+        const focusRangeEl = wrapper.querySelector(".focus-range");
+        const focusValueSpan = wrapper.querySelector(".value-focus-range");
+
+        if (data.focusautoidx) focusModeEl.value = data.focusautoidx;
+        if (data.focuspositon) {
+            focusRangeEl.value = data.focuspositon;
+            focusValueSpan.textContent = data.focuspositon;
+        }
+
+        focusModeEl.addEventListener("change", () => {
+            window.electronAPI.setFocus("focusautoidx", focusModeEl.value, ip);
+        });
+
+        focusRangeEl.addEventListener("input", () => {
+            focusValueSpan.textContent = focusRangeEl.value;
+            window.electronAPI.setFocus("focuspositon", focusRangeEl.value, ip);
+        });
+
+        // White Balance
+        const wbModeEl = wrapper.querySelector(".wb-mode");
+        const onePushBtn = wrapper.querySelector(".one-push-wb");
+        const redSlider = wrapper.querySelector(".wb-manual-red");
+        const blueSlider = wrapper.querySelector(".wb-manual-blue");
+        const redValue = wrapper.querySelector(".value-manual-red");
+        const blueValue = wrapper.querySelector(".value-manual-blue");
+
+        wbModeEl.value = data.wbmodeidx || "0";
+        redSlider.value = data.crgain || "0";
+        blueSlider.value = data.cbgain || "0";
+        redValue.textContent = redSlider.value;
+        blueValue.textContent = blueSlider.value;
+
+        wbModeEl.addEventListener("change", () => {
+            window.electronAPI.setWhiteBalance("wbmodeidx", wbModeEl.value, ip);
+            onePushBtn.disabled = wbModeEl.value !== "3";
+        });
+
+        redSlider.addEventListener("input", () => {
+            redValue.textContent = redSlider.value;
+            window.electronAPI.setWhiteBalance("crgain", redSlider.value, ip);
+        });
+
+        blueSlider.addEventListener("input", () => {
+            blueValue.textContent = blueSlider.value;
+            window.electronAPI.setWhiteBalance("cbgain", blueSlider.value, ip);
+        });
+
+        onePushBtn.addEventListener("click", () => {
+            window.electronAPI.setWhiteBalance("wbonepushtrigger", "1", ip);
+        });
+
+        // Picture Settings
+        const picSettings = [
+            { key: "brightness", selector: "picture-brightness", valueSelector: "value-brightness" },
+            { key: "saturation", selector: "picture-saturation", valueSelector: "value-saturation" },
+            { key: "sharpness", selector: "picture-sharpness", valueSelector: "value-sharpness" }
+        ];
+
+        picSettings.forEach(({ key, selector, valueSelector }) => {
+            const input = wrapper.querySelector(`.${selector}`);
+            const span = wrapper.querySelector(`.${valueSelector}`);
+            if (data[key]) {
+                input.value = data[key];
+                span.textContent = data[key];
+            }
+
+            input.addEventListener("input", () => {
+                span.textContent = input.value;
+                window.electronAPI.setPicture(key, input.value, ip);
+            });
+        });
+
+        // Belichtung
+        const exposureFields = [
+            { key: "exposuremodeindex", selector: "exposure-mode" },
+            { key: "shuttermanualidx", selector: "shutter" },
+            { key: "gainmanualidx", selector: "gain" },
+            { key: "gammanameindex", selector: "gamma" }
+        ];
+
+        exposureFields.forEach(({ key, selector }) => {
+            const el = wrapper.querySelector(`.${selector}`);
+            if (data[key]) el.value = data[key];
+
+            el.addEventListener("change", () => {
+                window.electronAPI.setExposure(key, el.value, ip);
+            });
+        });
+    });
+
+    // Bewegung
+    wrapper.querySelectorAll(".direction-button").forEach(button => {
+        const direction = button.dataset.direction;
+        button.addEventListener("mousedown", () => {
+            window.electronAPI.moveCamera(direction, ip);
+        });
+        const stop = () => window.electronAPI.moveCamera("stop", ip);
+        button.addEventListener("mouseup", stop);
+        button.addEventListener("mouseleave", stop);
+    });
+
+    //presets
+    wrapper.querySelectorAll(".load-preset").forEach(button => {
+        button.addEventListener("click", () => {
+            const presetNumber = button.dataset.preset;
+            window.electronAPI.getPreset(presetNumber, ip)
+                .then(response => {
+                if (response.success) {
+                    window.electronAPI.getCameraData(ip)
+                        .then(applySettingsToUI);
+                }
+            });
+        });
+    });
+
+    wrapper.querySelectorAll(".store-preset").forEach(button => {
+        button.addEventListener("click", () => {
+            const presetNumber = button.dataset.preset;
+            const settings = collectCurrentSettings(wrapper); // Wichtig: wrapper!
+            window.electronAPI.setPreset(presetNumber, settings, ip)
+                .then(response => {
+                console.log(response.message);
+            })
+                .catch(error => console.log(error));
+        });
+    });
+
+
+}
+
+
+
+
 
 
 // Preset speichern
 document.getElementById("store-preset-1").addEventListener("click", () => {
     const settings = collectCurrentSettings();
-    window.electronAPI.setPreset("1", settings).then(response => {
+    window.electronAPI.setPreset("1", settings, ip).then(response => {
         console.log(response.message);
     });
 });
@@ -507,20 +349,32 @@ document.getElementById("load-preset-4").addEventListener("click", () => {
 
 
 //Preset Hilfsfunktionen:
-function collectCurrentSettings() {
-    const ids = [
-        "zoom-slider", "focus-mode", "focus-range",
-        "wb-mode", "wb-manual-red", "wb-manual-blue",
-        "picture-brightness", "picture-saturation", "picture-sharpness",
-        "exposure-mode", "shutter", "gain", "gamma"
+function collectCurrentSettings(wrapper) {
+    const selectors = [
+        { key: "zoomposition", className: "zoom-slider" },
+        { key: "focusautoidx", className: "focus-mode" },
+        { key: "focuspositon", className: "focus-range" },
+        { key: "wbmodeidx", className: "wb-mode" },
+        { key: "crgain", className: "wb-manual-red" },
+        { key: "cbgain", className: "wb-manual-blue" },
+        { key: "brightness", className: "picture-brightness" },
+        { key: "saturation", className: "picture-saturation" },
+        { key: "sharpness", className: "picture-sharpness" },
+        { key: "exposuremodeindex", className: "exposure-mode" },
+        { key: "shuttermanualidx", className: "shutter" },
+        { key: "gainmanualidx", className: "gain" },
+        { key: "gammanameindex", className: "gamma" }
     ];
+
     const settings = {};
-    ids.forEach(id => {
-        const el = document.getElementById(id); //Für jedes Element in der Liste, speichere die id aus DOM
-        if (el) settings[id] = el.value; //Wenn das Element aus der Liste im DOM existiert, speichere den Wert
+    selectors.forEach(({ key, className }) => {
+        const el = wrapper.querySelector(`.${className}`);
+        if (el) settings[key] = el.value;
     });
+
     return settings;
 }
+
 
 function applySettingsToUI(cameraData) {
 

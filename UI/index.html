@@ -40,58 +40,111 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 font-sans">
 
-<div class="max-w-5xl mx-auto space-y-6">
 
-    <h1 class="text-3xl font-bold text-center">Kamera-Steuerung</h1>
+<!-- Kamera Container, in den die UIs eingefügt werden, je nachdem wie viele es sein sollen -->
+<div id="camera-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
-    <!--Bewegung -->
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Bewegung</h2>
-        <div class="grid grid-cols-3 gap-2 w-48 mx-auto">
-            <button class="direction-button btn" data-direction="up_left">↖︎</button>
-            <button class="direction-button btn" data-direction="up">↑</button>
-            <button class="direction-button btn" data-direction="up_right">↗︎</button>
-            <button class="direction-button btn" data-direction="left">←</button>
-            <button class="direction-button btn" data-direction="stop">⏹</button>
-            <button class="direction-button btn" data-direction="right">→</button>
-            <button class="direction-button btn" data-direction="down_left">↙︎</button>
-            <button class="direction-button btn" data-direction="down">↓</button>
-            <button class="direction-button btn" data-direction="down_right">↘︎</button>
-        </div>
-    </section>
 
-    <!--Zoom -->
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Zoom</h2>
-        <div class="flex items-center gap-4 justify-center">
-            <button class="btn" onclick="lessZoomButton()">-</button>
-            <span id="zoom-level" class="text-lg font-mono">5.0x</span>
-            <button class="btn" onclick="moreZoomButton()">+</button>
-            <input type="range" min="0" max="36" step="1" id="zoom-slider" class="w-64">
-        </div>
-    </section>
+<!-- Alles ist das Template -->
+<template id="camera-template">
+    <div class="camera-ui space-y-6 bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold camera-label">Kamera</h2>
 
-    <!--Belichtung -->
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Exposure</h2>
-        <div class="grid grid-cols-2 gap-4 max-w-md">
-            <label class="block">
+        <!-- Bewegung -->
+        <section>
+            <h3 class="font-semibold mb-2">Bewegung</h3>
+            <div class="grid grid-cols-3 gap-2 w-48 mx-auto">
+                <button class="direction-button btn" data-direction="up_left">↖︎</button>
+                <button class="direction-button btn" data-direction="up">↑</button>
+                <button class="direction-button btn" data-direction="up_right">↗︎</button>
+                <button class="direction-button btn" data-direction="left">←</button>
+                <button class="direction-button btn" data-direction="stop">⏹</button>
+                <button class="direction-button btn" data-direction="right">→</button>
+                <button class="direction-button btn" data-direction="down_left">↙︎</button>
+                <button class="direction-button btn" data-direction="down">↓</button>
+                <button class="direction-button btn" data-direction="down_right">↘︎</button>
+            </div>
+        </section>
+
+        <!-- Zoom -->
+        <section>
+            <h3 class="font-semibold mb-2">Zoom</h3>
+            <div class="flex items-center gap-4 justify-center">
+                <button class="btn zoom-out">-</button>
+                <span class="zoom-level text-lg font-mono">0.0x</span>
+                <button class="btn zoom-in">+</button>
+                <input type="range" min="0" max="36" step="0.2" class="zoom-slider w-64">
+            </div>
+        </section>
+
+        <!-- Fokus -->
+        <section>
+            <h3 class="font-semibold mb-2">Fokus</h3>
+            <select class="focus-mode select">
+                <option value="0">Manual</option>
+                <option value="1">Auto</option>
+            </select>
+            <div class="mt-2">
+                Focus Range: <span class="value-focus-range font-mono"></span>
+                <input type="range" min="0" max="2409" step="1" class="focus-range w-full">
+            </div>
+        </section>
+
+        <!-- White Balance -->
+        <section>
+            <h3 class="font-semibold mb-2">White Balance</h3>
+            <select class="wb-mode select">
+                <option value="0">Auto</option>
+                <option value="1">Indoor</option>
+                <option value="2">Outdoor</option>
+                <option value="3">One Push WB</option>
+                <option value="4">ATW</option>
+                <option value="5">Manual</option>
+                <option value="6">Sodium Lamp</option>
+            </select>
+            <button class="btn one-push-wb mt-2">One Push WB</button>
+            <div class="mt-2">
+                Manual Red: <span class="value-manual-red font-mono"></span>
+                <input type="range" min="0" max="128" step="1" class="wb-manual-red w-full">
+            </div>
+            <div class="mt-2">
+                Manual Blue: <span class="value-manual-blue font-mono"></span>
+                <input type="range" min="0" max="128" step="1" class="wb-manual-blue w-full">
+            </div>
+        </section>
+
+        <!-- Picture -->
+        <section>
+            <h3 class="font-semibold mb-2">Picture Settings</h3>
+            <div>
+                Brightness: <span class="value-brightness font-mono"></span>
+                <input type="range" min="0" max="15" step="1" class="picture-brightness w-full">
+            </div>
+            <div>
+                Saturation: <span class="value-saturation font-mono"></span>
+                <input type="range" min="0" max="15" step="1" class="picture-saturation w-full">
+            </div>
+            <div>
+                Sharpness: <span class="value-sharpness font-mono"></span>
+                <input type="range" min="0" max="14" step="1" class="picture-sharpness w-full">
+            </div>
+        </section>
+
+        <!-- Belichtung -->
+        <section>
+            <h3 class="font-semibold mb-2">Belichtung</h3>
+            <label>
                 Modus:
-                <select id="exposure-mode" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
+                <select class="exposure-mode select">
                     <option value="0">Full Auto</option>
                     <option value="3">Manuell</option>
                     <option value="1">Shutter Priority</option>
                     <option value="2">Iris Priority</option>
                 </select>
             </label>
-            <label class="block">
+            <label>
                 Shutter:
-                <!-- shuttermanualindex 0-21 für 1/1000 - 1/1 -->
-                <select id="shutter" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
+                <select class="shutter select">
                     <option value="0">1/10000</option>
                     <option value="1">1/5000</option>
                     <option value="2">1/3000</option>
@@ -116,12 +169,9 @@
                     <option value="21">1/1</option>
                 </select>
             </label>
-            <label class="block">
+            <label>
                 Gain:
-                <!--von 0 bis 45db-->
-                <select id="gain" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
+                <select class="gain select">
                     <option value="0">0dB</option>
                     <option value="1">3dB</option>
                     <option value="2">6dB</option>
@@ -140,103 +190,39 @@
                     <option value="15">45dB</option>
                 </select>
             </label>
-            <label class="block">
+            <label>
                 Gamma:
-                <select id="gamma" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
+                <select class="gamma select">
                     <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
                 </select>
             </label>
-        </div>
-    </section>
+        </section>
 
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Picture</h2>
-        <div class="grid grid-cols-2 gap-4 max-w-md">
-            <label class="block">
-                Brightness: <span id="value-brightness" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="15" step="1" id="picture-brightness" class="w-64">
+        <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
+            <h2 class="text-xl font-semibold mb-4">Presets</h2>
+            <div class="grid grid-cols-2 gap-4 max-w-md">
+                <label class="block">
+                    <button class="btn load-preset" data-preset="1">Load 1</button>
+                    <button class="btn load-preset" data-preset="2">Load 2</button>
+                    <button class="btn load-preset" data-preset="3">Load 3</button>
+                    <button class="btn load-preset" data-preset="4">Load 4</button>
+                    <br><br>
+                    <button class="btn store-preset" data-preset="1">Save 1</button>
+                    <button class="btn store-preset" data-preset="2">Save 2</button>
+                    <button class="btn store-preset" data-preset="3">Save 3</button>
+                    <button class="btn store-preset" data-preset="4">Save 4</button>
+                </label>
+            </div>
+        </section>
 
-                Saturation: <span id="value-saturation" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="15" step="1" id="picture-saturation" class="w-64">
 
-                Sharpness: <span id="value-sharpness" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="14" step="1" id="picture-sharpness" class="w-64">
+    </div> <!-- div Camera UI  (template erlaubt nur einen Wurzelknoten!!)-->
 
-            </label>
-        </div>
-    </section>
+</template>
 
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">White Balance</h2>
-        <div class="grid grid-cols-2 gap-4 max-w-md">
-            <label class="block">
-                WB Mode:
-                <select id="wb-mode" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
-                    <option value="0">Auto</option>
-                    <option value="1">Indoor</option>
-                    <option value="2">Outdoor</option>
-                    <option value="3">One Push WB</option>
-                    <option value="4">ATW</option>
-                    <option value="5">Manual</option>
-                    <option value="6">Sodium Lamp</option>
-                </select>
-                <br>
-                <button id="onePushWBButton" class="btn" onclick="onePushWB()">One Push WB</button>
-                <br>
-                <br>
-                Manual Red: <span id="value-manual-red" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="128" step="1" id="wb-manual-red" class="w-64">
-
-                Manual Blue: <span id="value-manual-blue" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="128" step="1" id="wb-manual-blue" class="w-64">
-
-            </label>
-        </div>
-    </section>
-
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Focus</h2>
-        <div class="grid grid-cols-2 gap-4 max-w-md">
-            <label class="block">
-                Focus mode:
-                <select id="focus-mode" class="w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400
-  bg-white text-black border-gray-300
-  dark:bg-gray-700 dark:text-white dark:border-gray-500">
-                    <option value="0">Manual</option>
-                    <option value="1">Auto</option>
-                </select>
-                <br>
-                Focus Range: <span id="value-focus-range" class="ml-2 font-mono"></span>
-                <input type="range" min="0" max="2409" step="1" id="focus-range" class="w-64">
-            </label>
-        </div>
-    </section>
-
-    <section class="bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-6 shadow">
-        <h2 class="text-xl font-semibold mb-4">Presets</h2>
-        <div class="grid grid-cols-2 gap-4 max-w-md">
-            <label class="block">
-                <button id="load-preset-1" class="btn">1</button>
-                <button id="load-preset-2" class="btn">2</button>
-                <button id="load-preset-3" class="btn">3</button>
-                <button id="load-preset-4" class="btn">4</button>
-                <br><br>
-                <button id="store-preset-1" class="btn">Save 1</button>
-                <button id="store-preset-2" class="btn">Save 2</button>
-                <button id="store-preset-3" class="btn">Save 3</button>
-                <button id="store-preset-4" class="btn">Save 4</button>
-            </label>
-        </div>
-    </section>
-
-</div>
 
 <div class="text-center mt-4">
     <button class="btn" onclick="window.electronAPI.openSettings()">⚙️ Einstellungen</button>

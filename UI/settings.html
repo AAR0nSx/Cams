@@ -8,26 +8,87 @@
     <input type="checkbox" id="darkModeToggle" /> Dark Mode aktivieren
 </label>
 <br>
-<label>
-    IP Adresse 1: <input type="textfield" id="IPAdress1" />
-</label>
-<br>
+<h2>Kamera-IP-Adressen</h2>
+<div id="ipInputs">
+    <input type="text" class="ip-field" placeholder="IP Adresse 1" /><br />
+    <input type="text" class="ip-field" placeholder="IP Adresse 2" /><br />
+    <input type="text" class="ip-field" placeholder="IP Adresse 3" /><br />
+</div>
+<button id="saveIPs">Speichern</button>
 <br>
 <button onclick="window.close()">Schließen</button>
 
 <script>
+
     window.addEventListener("DOMContentLoaded", async () => {
         const settings = await window.electronAPI.getSettings();
+
+        // Dark Mode Zustand setzen
         const darkModetoggle = document.getElementById("darkModeToggle");
         darkModetoggle.checked = settings.darkMode;
 
-        darkModetoggle.addEventListener("change", () => {
-            const newSettings = { darkMode: darkModetoggle.checked };
-            window.electronAPI.setSettings(newSettings);
-            localStorage.setItem("electron-settings", JSON.stringify(newSettings));
+        // IP-Felder mit gespeicherten IPs befüllen
+        const savedIPs = settings.cameraIPs || [];
+        const ipFields = document.querySelectorAll(".ip-field");
+        ipFields.forEach((field, index) => {
+            field.value = savedIPs[index] || "";
         });
 
+        // Dark Mode Toggle ändert nur localStorage, kein echtes Speichern
+        darkModetoggle.addEventListener("change", () => {
+            const draftSettings = {
+                darkMode: darkModetoggle.checked,
+                cameraIPs: getCurrentIPs()
+            };
+            localStorage.setItem("electron-settings", JSON.stringify(draftSettings));
+        });
+
+        // Speichern-Knopf
+        document.getElementById("saveIPs").addEventListener("click", async () => {
+            const cameraIPs = getCurrentIPs();
+            const newSettings = {
+                darkMode: darkModetoggle.checked,
+                cameraIPs
+            };
+
+            await window.electronAPI.setSettings(newSettings);
+            localStorage.setItem("electron-settings", JSON.stringify(newSettings));
+            window.close(); // optional
+        });
     });
+
+    // Hilfsfunktion
+    function getCurrentIPs() {
+        return Array.from(document.querySelectorAll(".ip-field"))
+            .map(input => input.value.trim())
+            .filter(ip => ip);
+    }
+
+
+    //IP Adressen Felder
+    /*
+    document.getElementById("saveIPs").addEventListener("click", () => {
+        const ips = Array.from(document.querySelectorAll(".ip-field"))
+            .map(input => input.value.trim())
+            .filter(ip => ip); // leere rausfiltern
+
+        const settings = { darkMode: document.getElementById("darkModeToggle").checked, cameraIPs: ips };
+        window.electronAPI.setSettings(settings);
+        localStorage.setItem("electron-settings", JSON.stringify(settings));
+    });
+    */
+
+
+    //Settings Speichern button
+    document.getElementById("saveIPs").addEventListener("click", () => {
+        const settings = {
+            darkMode: document.getElementById("darkModeToggle").checked,
+            cameraIPs: getCurrentIPs()
+        };
+        window.electronAPI.setSettings(settings);
+        localStorage.setItem("electron-settings", JSON.stringify(settings));
+    });
+
 </script>
 </body>
 </html>

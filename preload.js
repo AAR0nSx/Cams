@@ -7,16 +7,19 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 //Bridge zu Main
 contextBridge.exposeInMainWorld("electronAPI", {
-    enhanceZoom: (zoomLevel) => ipcRenderer.invoke("zoom-enhance", zoomLevel),
-    decreaseZoom: (zoomLevel) => ipcRenderer.invoke("zoom-decrease", zoomLevel),
-    moveCamera: (dir) => ipcRenderer.send('move-camera', dir),
-    setExposure: (key, value) => ipcRenderer.invoke("set-exposure", key, value),
-    setPicture: (key, value) => ipcRenderer.invoke("set-picture", key, value),
-    setWhiteBalance: (key, value) => ipcRenderer.invoke("set-white-balance", key, value),
-    setFocus: (key, value) => ipcRenderer.invoke("set-focus", key, value),
-    setPreset: (key, value) => ipcRenderer.invoke("set-preset", key, value),
-    getPreset: (key, value) => ipcRenderer.invoke("get-preset", key, value),
-    getCameraData: () => ipcRenderer.invoke("get-camera-data"),
+    enhanceZoom: (zoomLevel, ip) => ipcRenderer.invoke("zoom-enhance", zoomLevel, ip),
+    decreaseZoom: (zoomLevel, ip) => ipcRenderer.invoke("zoom-decrease", zoomLevel, ip),
+    moveCamera: (dir, ip) => ipcRenderer.send('move-camera', dir, ip),
+    setExposure: (key, value, ip) => ipcRenderer.invoke("set-exposure", key, value, ip),
+    setPicture: (key, value, ip) => ipcRenderer.invoke("set-picture", key, value, ip),
+    setWhiteBalance: (key, value, ip) => ipcRenderer.invoke("set-white-balance", key, value, ip),
+    setFocus: (key, value, ip) => ipcRenderer.invoke("set-focus", key, value, ip),
+    setPreset: (key, value, ip) => ipcRenderer.invoke("set-preset", key, value, ip),
+    getPreset: (key, value, ip) => ipcRenderer.invoke("get-preset", key, value, ip),
+    getCameraData: (ip) => ipcRenderer.invoke("get-camera-data", ip),
+
+    onUpdateCameraUIs: (callback) => ipcRenderer.on("update-camera-uis", () => callback()),
+
 
     //settingspage oeffnen
     openSettings: () => ipcRenderer.send("open-settings"),
