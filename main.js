@@ -18,10 +18,8 @@ const Store = require("electron-store").default;
 const store = new Store();
 
 
-//const { JSDOM } = jsdom;
-
 let window;
-let cameraIPAdress = "172.23.98.93";
+
 //console.log('electronApp:', electronApp);
 
 function createWindow() {
