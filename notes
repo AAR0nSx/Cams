@@ -202,6 +202,13 @@ Man sieht sofort welche schon belegt sind und mit was
 
 
 
-
+--> Button richtig umrahmen lassen!
 --> Andere templates laden, je nachdem wie viele textfelder (IPs) vergeben sind und damit die dynamische
 Darstellung faken!!
+
+--> Roter und grüner Punkt oder so für Verbindungsstatus (regelmäßig abfragen? EventListener? vlt onChange oder sowas)
+
+--> IP Adressfelder Eingabesicher machen
+
+--> Fehlerbehandlungen einbauen:
+- Netzwerkkabel gezogen
