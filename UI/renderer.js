@@ -4,21 +4,6 @@
 console.log("renderer.js geladen.");
 
 
-let currentZoomLevel = 5; // Platzhalter
-const ZOOM_MIN = 0;
-const ZOOM_MAX = 36;
-const ZOOM_STEP = 0.2;
-const ZOOM_STEP_BUTTON = 1;
-
-let activeKey; //= null; // Damit nicht mehrfach dieselbe Bewegung ausgelöst wird (ist erstmal aus aber falls benötigt)
-
-
-const pressedKeys = new Set();
-let lastDirection = null;
-let stopTimeout = null;
-let zoomInterval = null;
-
-
 
 window.addEventListener("DOMContentLoaded", async () => {
     const settings = await window.electronAPI.getSettings();
@@ -312,81 +297,3 @@ function applySettingsToUI(wrapper, cameraData) {
         }
     });
 }
-
-
-
-
-/*
-
-//One Push White balance Funktion (One Push WB Button)
-function onePushWB(){
-    const key = "wbonepushtrigger";
-    const value = "[object Event]";
-    console.log("onePushWB Funktion ausgeführt");
-    window.electronAPI.setWhiteBalance(`${key}`, `${value}`)
-        .then(response => {
-            console.log(`White Balance Wert auf ${key} gesetzt`);
-        });
-}
-
-*/
-
-
-//Funktionen für Zoom
-
-//einheitliche Zoom Funktion -> von slider genutzt
-/*
-function setZoomLevel(level) {
-    if (level < ZOOM_MIN) level = ZOOM_MIN;
-    if (level > ZOOM_MAX) level = ZOOM_MAX;
-
-    currentZoomLevel = level;
-    document.getElementById("zoom-level").innerText = `${level.toFixed(1)}x`;
-    document.getElementById("zoom-slider").value = level;
-
-    window.electronAPI.enhanceZoom(level)
-        .then(response => console.log(response.message))
-        .catch(error => console.error("Zoom-Fehler:", error));
-}
-
-
-//slider Event Listener für Zoom
-document.getElementById("zoom-slider").addEventListener("input", (event) => {
-    const newZoom = parseFloat(event.target.value);
-    setZoomLevel(newZoom);
-});
-
-
-//einzelne handler Funktionen für Button und Tastendruck des Zooms
-function moreZoom() {
-    if (currentZoomLevel + ZOOM_STEP <= ZOOM_MAX) {
-        setZoomLevel(currentZoomLevel + ZOOM_STEP);
-    } else {
-        console.log("Maximaler Zoom erreicht.");
-    }
-}
-
-function lessZoom() {
-    if (currentZoomLevel - ZOOM_STEP >= ZOOM_MIN) {
-        setZoomLevel(currentZoomLevel - ZOOM_STEP);
-    } else {
-        console.log("Minimaler Zoom erreicht.");
-    }
-}
-
-function moreZoomButton() {
-    if (currentZoomLevel + ZOOM_STEP_BUTTON <= ZOOM_MAX) {
-        setZoomLevel(currentZoomLevel + ZOOM_STEP_BUTTON);
-    } else {
-        console.log("Maximaler Zoom erreicht.");
-    }
-}
-
-function lessZoomButton() {
-    if (currentZoomLevel - ZOOM_STEP_BUTTON >= ZOOM_MIN) {
-        setZoomLevel(currentZoomLevel - ZOOM_STEP_BUTTON);
-    } else {
-        console.log("Minimaler Zoom erreicht.");
-    }
-}
-*/

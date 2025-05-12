@@ -3,7 +3,7 @@
 * Steuert Eletron
 */
 
-//172.23.98.93
+//172.23.98.93 -> TestIP
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const electronApp = require("electron").app;
@@ -153,19 +153,7 @@ ipcMain.handle("get-camera-data", async (event, ip) => {
     return null;
   }
 });
-/*
-ipcMain.handle("get-camera-data", async() => {
-  console.log("Sending camera data to renderer...");
-  try{
-    const data = await getCameraData();
-    return data;
-  }catch(error){
-    console.error(error);
-    console.log("Fehler beim Senden der Kameradaten. ", error);
-    return null;
-  }
-});
-*/
+
 
 //setPreset
 ipcMain.handle("set-preset", async (event, presetNumber, settings, ip) => {
