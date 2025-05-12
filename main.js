@@ -25,7 +25,7 @@ let cameraIPAdress = "172.23.98.93";
 //console.log('electronApp:', electronApp);
 
 function createWindow() {
- const window = new electronBrowserWindow({
+  const window = new electronBrowserWindow({
     x: 0,
     y: 0,
     width: 1920,
@@ -39,12 +39,12 @@ function createWindow() {
   });
 
   window
-    .loadFile("./UI/index.html")
-    //.then(() => { window.webContents.send('sendSettings', settings.renderer); })
-    .then(() => {
-      window.show();
-      window.focus();
-    });
+      .loadFile("./UI/index.html")
+      //.then(() => { window.webContents.send('sendSettings', settings.renderer); })
+      .then(() => {
+        window.show();
+        window.focus();
+      });
 
   return window;
 }
@@ -135,6 +135,7 @@ ipcMain.handle("set-settings", async (event, newSettings) => {
 //Kameradaten zum renderer schicken
 ipcMain.handle("get-camera-data", async (event, ip) => {
   const url = `http://${ip}/cgi-bin/lums_ndisetinfo.cgi`;
+  console.log("Frage Kamera ab (Main):", ip);
   try {
     const response = await needle("get", url);
     if (response.statusCode === 200) {
@@ -247,31 +248,31 @@ ipcMain.handle("set-focus", async(event, key, value, ip) => {
 
 //setWB
 ipcMain.handle("set-white-balance", async(event, key, value, ip) => {
-    const payload = {
-      wbmodeidx:"",
-      crgain:"",
-      cbgain:"",
-      wbonepushtrigger:""
-    };
+  const payload = {
+    wbmodeidx:"",
+    crgain:"",
+    cbgain:"",
+    wbonepushtrigger:""
+  };
 
-    payload[key] = value;
+  payload[key] = value;
 
-    try {
-      const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetwb.cgi`, {
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetwb.cgi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      console.log("Antwort der Kamera: ", data);
-      return {success: true, message: "Red/Blue angepasst: ", data};
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    console.log("Antwort der Kamera: ", data);
+    return {success: true, message: "Red/Blue angepasst: ", data};
 
-    }catch(error){
-      console.error(error);
-      console.log("Fehler beim setzen des Rot/Blau Werts. ", ip, error);
-    }
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim setzen des Rot/Blau Werts. ", ip, error);
+  }
 
 });
 
@@ -330,9 +331,9 @@ ipcMain.handle("set-exposure", async (event, key, value, ip) => {
 
   try{
     const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetexposure.cgi`, {
-    method: "POST",
+      method: "POST",
       headers: {
-      "Content-Type": "application/json"
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(payload),
     });

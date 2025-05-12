@@ -44,6 +44,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     function renderCameraUIs(cameraIPs) {
+        console.log("Render Camera UIs mit IPs (DOM loaded renderer):", cameraIPs);
+
         container.innerHTML = ""; // Alte UIs entfernen
         cameraIPs.forEach((ip, index) => {
             const clone = template.content.cloneNode(true);
@@ -88,6 +90,9 @@ async function refreshCameraUIs() {
 //init Camera UI
 function initCameraUI(wrapper, ip) {
     console.log(`Initialisiere Kamera-UI für ${ip}`);
+
+    console.log("Hole Kameradaten für IP (init Camera UI):", ip);
+
 
     // Kamera-Daten holen
     window.electronAPI.getCameraData(ip).then(data => {
@@ -222,11 +227,11 @@ function initCameraUI(wrapper, ip) {
             const presetNumber = button.dataset.preset;
             window.electronAPI.getPreset(presetNumber, ip)
                 .then(response => {
-                if (response.success) {
-                    window.electronAPI.getCameraData(ip)
-                        .then(applySettingsToUI);
-                }
-            });
+                    if (response.success) {
+                        window.electronAPI.getCameraData(ip)
+                            .then(data => applySettingsToUI(wrapper, data));
+                    }
+                });
         });
     });
 
@@ -236,8 +241,8 @@ function initCameraUI(wrapper, ip) {
             const settings = collectCurrentSettings(wrapper); // Wichtig: wrapper!
             window.electronAPI.setPreset(presetNumber, settings, ip)
                 .then(response => {
-                console.log(response.message);
-            })
+                    console.log(response.message);
+                })
                 .catch(error => console.log(error));
         });
     });
@@ -247,105 +252,6 @@ function initCameraUI(wrapper, ip) {
 
 
 
-
-
-
-// Preset speichern
-document.getElementById("store-preset-1").addEventListener("click", () => {
-    const settings = collectCurrentSettings();
-    window.electronAPI.setPreset("1", settings, ip).then(response => {
-        console.log(response.message);
-    });
-});
-
-
-document.getElementById("store-preset-2").addEventListener("click", () => {
-    const settings = collectCurrentSettings();
-    window.electronAPI.setPreset("2", settings).then(response => {
-        console.log(response.message);
-    });
-});
-
-document.getElementById("store-preset-3").addEventListener("click", () => {
-    const settings = collectCurrentSettings();
-    window.electronAPI.setPreset("3", settings).then(response => {
-        console.log(response.message);
-    });
-});
-
-document.getElementById("store-preset-4").addEventListener("click", () => {
-    const settings = collectCurrentSettings();
-    window.electronAPI.setPreset("4", settings).then(response => {
-        console.log(response.message);
-    });
-});
-
-
-// Preset laden
-document.getElementById("load-preset-1").addEventListener("click", () => {
-    window.electronAPI.getPreset("1").then(response => {
-        if (response.success) {
-            console.log("Preset 1 wurde geladen:", response.message);
-            // Jetzt neue Werte von der Kamera holen und anwenden
-            window.electronAPI.getCameraData().then(data => {
-                applySettingsToUI(data);
-                console.log("Kamera-Einstellungen übernommen:", data);
-            });
-
-        } else {
-            console.error(response.message);
-        }
-    });
-});
-
-
-document.getElementById("load-preset-2").addEventListener("click", () => {
-    window.electronAPI.getPreset("2").then(response => {
-        if (response.success) {
-            console.log("Preset 1 wurde geladen:", response.message);
-            // Jetzt neue Werte von der Kamera holen und anwenden
-            window.electronAPI.getCameraData().then(data => {
-                applySettingsToUI(data);
-                console.log("Kamera-Einstellungen übernommen:", data);
-            });
-
-        } else {
-            console.error(response.message);
-        }
-    });
-});
-
-document.getElementById("load-preset-3").addEventListener("click", () => {
-    window.electronAPI.getPreset("3").then(response => {
-        if (response.success) {
-            console.log("Preset 3 wurde geladen:", response.message);
-            // Jetzt neue Werte von der Kamera holen und anwenden
-            window.electronAPI.getCameraData().then(data => {
-                applySettingsToUI(data);
-                console.log("Kamera-Einstellungen übernommen:", data);
-            });
-
-        } else {
-            console.error(response.message);
-        }
-    });
-});
-
-document.getElementById("load-preset-4").addEventListener("click", () => {
-    window.electronAPI.getPreset("4").then(response => {
-        if (response.success) {
-            console.log("Preset 1 wurde geladen:", response.message);
-            // Jetzt neue Werte von der Kamera holen und anwenden
-            window.electronAPI.getCameraData().then(data => {
-                applySettingsToUI(data);
-                console.log("Kamera-Einstellungen übernommen:", data);
-            });
-
-        } else {
-            console.error(response.message);
-        }
-    });
-});
 
 
 //Preset Hilfsfunktionen:
@@ -376,11 +282,7 @@ function collectCurrentSettings(wrapper) {
 }
 
 
-function applySettingsToUI(cameraData) {
-
-    //mapping von Camera Key auf ID im UI/DOM
-    // , weil die indexe im data Objekt nicht so heißen wie die ID der DOM Elemente und sie deshalb ohne das
-    // mapping nicht gefunden und aktualisiert werden können
+function applySettingsToUI(wrapper, cameraData) {
     const mapping = {
         "zoomposition": "zoom-slider",
         "focusautoidx": "focus-mode",
@@ -397,22 +299,16 @@ function applySettingsToUI(cameraData) {
         "gammanameindex": "gamma"
     };
 
-    Object.entries(mapping).forEach(([cameraKey, uiId]) => {
-        const el = document.getElementById(uiId);
+    Object.entries(mapping).forEach(([cameraKey, className]) => {
+        const el = wrapper.querySelector(`.${className}`);
         if (el && cameraData[cameraKey] !== undefined) {
             el.value = cameraData[cameraKey];
 
-            // für visuelle Anzeigen neben Slidern
-            const spanId = `value-${uiId.split("-").pop()}`;
-            const valueSpan = document.getElementById(spanId);
+            const valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
             if (valueSpan) valueSpan.textContent = cameraData[cameraKey];
 
             el.dispatchEvent(new Event("input", { bubbles: true }));
             el.dispatchEvent(new Event("change", { bubbles: true }));
-
-            console.log(`Setze ${uiId} auf ${cameraData[cameraKey]}`);
-        } else {
-            console.warn(`Kein Element oder Wert für: ${cameraKey} → ${uiId}`);
         }
     });
 }
@@ -420,6 +316,7 @@ function applySettingsToUI(cameraData) {
 
 
 
+/*
 
 //One Push White balance Funktion (One Push WB Button)
 function onePushWB(){
@@ -428,15 +325,17 @@ function onePushWB(){
     console.log("onePushWB Funktion ausgeführt");
     window.electronAPI.setWhiteBalance(`${key}`, `${value}`)
         .then(response => {
-           console.log(`White Balance Wert auf ${key} gesetzt`);
+            console.log(`White Balance Wert auf ${key} gesetzt`);
         });
 }
+
+*/
 
 
 //Funktionen für Zoom
 
 //einheitliche Zoom Funktion -> von slider genutzt
-
+/*
 function setZoomLevel(level) {
     if (level < ZOOM_MIN) level = ZOOM_MIN;
     if (level > ZOOM_MAX) level = ZOOM_MAX;
@@ -490,3 +389,4 @@ function lessZoomButton() {
         console.log("Minimaler Zoom erreicht.");
     }
 }
+*/
