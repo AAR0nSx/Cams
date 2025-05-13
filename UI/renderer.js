@@ -108,7 +108,12 @@ function initCameraUI(wrapper, ip) {
         const focusRangeEl = wrapper.querySelector(".focus-range");
         const focusValueSpan = wrapper.querySelector(".value-focus-range");
 
-        if (data.focusautoidx) focusModeEl.value = data.focusautoidx;
+        //if (data.focusautoidx) focusModeEl.value = data.focusautoidx; //setzt den Wert von Fokusmdoe auf den tatsächlichen
+        //Wenn Fokusmode 2 oder 3 empfangen werden (was sie werden warum auch immer), setzt er den Modus erstmal manuell
+        if (data.focusautoidx == "2" || data.focusautoidx == "3") {
+            focusModeEl.value = "0";
+        }
+
         if (data.focuspositon) {
             focusRangeEl.value = data.focuspositon;
             focusValueSpan.textContent = data.focuspositon;
