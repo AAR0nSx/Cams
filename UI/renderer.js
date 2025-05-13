@@ -32,6 +32,13 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.log("Render Camera UIs mit IPs (DOM loaded renderer):", cameraIPs);
 
         container.innerHTML = ""; // Alte UIs entfernen
+
+        // Dynamische Grid-Klassen setzen
+        const gridClassBase = "grid gap-4 p-2 max-w-screen-2xl mx-auto";
+        const gridCols = Math.min(cameraIPs.length, 4); // Max. 4 Spalten
+        container.className = `${gridClassBase} grid-cols-${gridCols}`;
+
+
         cameraIPs.forEach((ip, index) => {
             const clone = template.content.cloneNode(true);
             const wrapper = clone.querySelector(".camera-ui");
@@ -42,6 +49,57 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
     }
 });
+
+//window.addEventListener("offline")
+
+setInterval(() => {
+    const IPs = settings.cameraIPs;
+    IPs.forEach(async (ip) => {
+        try {
+            const data = await window.electronAPI.getCameraData(ip);
+            const cameraIP = data.netip?.trim(); //-> data.netip ? .trim (leerzeichen aus string entfernen) : data.netip = undefined
+
+            if (cameraIP?.startsWith("172.23.97") || cameraIP?.startsWith("172.23.98" || cameraIP?.startsWith("172.23.99"))) {
+                //console.log(`${cameraIP} ist: online`);
+                setCameraStatus(ip, "online");
+            } else if (cameraIP?.startsWith("172.23.21")) {
+                //console.log(`${cameraIP} ist: falsches Netz`);
+                setCameraStatus(ip, "warn");
+            } else {
+                //console.log(`${cameraIP} ist: offline`);
+                setCameraStatus(ip, "offline");
+            }
+        } catch (err) {
+            //console.warn(`Kamera ${ip} nicht erreichbar.`);
+            setCameraStatus(ip, "offline");
+        }
+    });
+}, 5000); //Updates alle 5 Sekunden
+
+
+
+//Statuslampe handler
+function setCameraStatus(ip, status) {
+    console.log(`setCameraStatus(${ip}, ${status})`);
+
+    const wrapper = document.querySelector(`.camera-ui[data-ip="${ip}"]`);
+    //console.log("Status setzen für IP:", ip, "Wrapper gefunden?", !!wrapper);
+    if (!wrapper) return;
+
+    const lampe = wrapper.querySelector(".status-lampe");
+    //console.log("Lampe gefunden?", !!lampe);
+    if (!lampe) return;
+
+    const classes = {
+        online: "status-lampe inline-flex h-4 w-4 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]",
+        offline: "status-lampe inline-flex h-4 w-4 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] opacity-80 gentle-ping",
+        warn: "status-lampe inline-flex h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] opacity-80 gentle-ping",
+    };
+
+    lampe.className = `status-lampe ${classes[status] || classes.warn}`;
+}
+
+
 
 
 //UI neu bauen bei speichern

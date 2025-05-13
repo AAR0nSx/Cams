@@ -45,13 +45,24 @@
 </div>
 
 <!-- Kamera Container, in den die UIs eingefügt werden, je nachdem wie viele es sein sollen -->
-<div id="camera-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-2 max-w-screen-2xl mx-auto"></div>
+<div id="camera-container" class=""></div>
 
 
 <!-- Alles ist das Template -->
 <template id="camera-template">
     <div class="camera-ui space-y-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded-xl p-4 shadow text-[15px]">
-        <h2 class="text-xl font-semibold camera-label">Kamera</h2>
+
+
+        <div class="flex items-center gap-2">
+            <h2 class="text-xl font-semibold camera-label">Kamera</h2>
+            <span class="status-lampe inline-flex h-4 w-4 rounded-full bg-red-500 opacity-80 gentle-ping"></span>
+        </div>
+
+
+        <!--
+        w-4 h-4 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] glow
+        absolute inline-flex h-4 w-4 rounded-full bg-yellow-400 opacity-75 animate-ping
+        -->
 
         <!-- Bewegung -->
         <section>
@@ -251,6 +262,26 @@ w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 f
         padding-right: 2.5rem;
     }
 
+
+
+    /*Keyframes für Lampen Animation*/
+    @keyframes gentle-ping {
+        0% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+        50% {
+            transform: scale(1.5);
+            opacity: 1; /* bleibt sichtbar */
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+    }
+    .gentle-ping {
+        animation: gentle-ping 2.5s ease-in-out infinite;
+    }
 
 </style>
 

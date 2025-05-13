@@ -10,10 +10,10 @@
 <br>
 <h2>Kamera-IP-Adressen</h2>
 <div id="ipInputs">
-    <input type="text" class="ip-field" placeholder="IP Adresse 1" /><br />
-    <input type="text" class="ip-field" placeholder="IP Adresse 2" /><br />
-    <input type="text" class="ip-field" placeholder="IP Adresse 3" /><br />
-    <input type="text" class="ip-field" placeholder="IP Adresse 4" /><br />
+    <input type="text" class="ip-field" maxlength="15" onkeypress='return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 46' placeholder="IP Adresse 1" /><br />
+    <input type="text" class="ip-field" maxlength="15" onkeypress='return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 46' placeholder="IP Adresse 2" /><br />
+    <input type="text" class="ip-field" maxlength="15" onkeypress='return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 46' placeholder="IP Adresse 3" /><br />
+    <input type="text" class="ip-field" maxlength="15" onkeypress='return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 46' placeholder="IP Adresse 4" /><br />
 </div>
 <button id="saveIPs">Speichern</button>
 <br>
