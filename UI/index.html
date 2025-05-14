@@ -66,7 +66,7 @@
 
         <!-- Bewegung -->
         <section>
-            <h3 class="font-semibold mb-2">Bewegung</h3>
+            <h3 class="font-semibold">Bewegung</h3>
             <div class="grid grid-cols-3 gap-1 w-44 mx-auto text-lg">
                 <button class="direction-button btn" data-direction="up_left">↖︎</button>
                 <button class="direction-button btn" data-direction="up">↑</button>
@@ -82,7 +82,7 @@
 
         <!-- Zoom (allein auf voller Breite) -->
         <section>
-            <h3 class="font-semibold mb-2">Zoom</h3>
+            <h3 class="font-semibold">Zoom</h3>
             <div class="flex items-center gap-3 justify-center">
                 <button class="btn zoom-out px-3 py-1">-</button>
                 <span class="zoom-level font-mono text-lg">0.0x</span>
@@ -101,12 +101,12 @@
                 </select>
                 <span class="value-focus-range font-mono text-xs block mb-1">Focus Range:</span>
                 <input type="range" min="0" max="2409" step="1" class="focus-range w-full">
-                <button class="btn focus-out px-3 py-1">-</button>
-                <button class="btn focus-in px-3 py-1">+</button>
+                <button class="btn focus-out px-3 py-1 px-5 mx-10 my-1 border border-black dark:border-white hover:border-red-700 dark:hover:border-red-700 rounded-md">-</button>
+                <button class="btn focus-in px-3 py-1 px-5 mx-10 my-1 border border-black dark:border-white hover:border-green-500 dark:hover:border-green-500 rounded-md">+</button>
             </div>
 
             <div>
-                <h3 class="font-semibold mb-2">Belichtung</h3>
+                <h3 class="font-semibold mb-2">Belichtung</h3><span class="value-focus-range font-mono text-xs block mb-1">1.Mode 2.Shutter 3.Gain 4.Gamma</span>
                 <select class="exposure-mode select mb-2 w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black border-gray-300 dark:bg-gray-700 dark:text-white dark:border-gray-500 appearance-none" style="background-image: url('data:image/svg+xml,%3Csvg fill=\'none\' stroke=\'%23ccc\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E'); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; padding-right: 2.5rem;">
                     <option value="0">Full Auto</option>
                     <option value="3">Manuell</option>
@@ -166,7 +166,7 @@
 
         <!-- White Balance allein -->
         <section>
-            <h3 class="font-semibold mb-2">White Balance</h3>
+            <h3 class="font-semibold mb-1.5">White Balance</h3>
             <select class="wb-mode select mb-2 w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black border-gray-300 dark:bg-gray-700 dark:text-white dark:border-gray-500 appearance-none" style="background-image: url('data:image/svg+xml,%3Csvg fill=\'none\' stroke=\'%23ccc\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' viewBox=\'0 0 24 24\'%3E%3Cpath d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E'); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1rem; padding-right: 2.5rem;">
                 <option value="0">Auto</option>
                 <option value="1">Indoor</option>
@@ -176,7 +176,7 @@
                 <option value="5">Manual</option>
                 <option value="6">Sodium Lamp</option>
             </select>
-            <button class="btn one-push-wb mt-2 px-3 py-1 text-sm">One Push WB</button>
+            <button class="btn one-push-wb mt-2 px-3 py-1 text-sm border border-black dark:border-white hover:border-blue-500 dark:hover:border-blue-500 rounded-md">One Push WB</button>
             <div class="mt-3">
                 <span class="font-mono text-xs">Manual Red: </span><span class="value-manual-red font-mono text-x"> N.A.</span>
                 <input type="range" min="0" max="128" step="1" class="wb-manual-red w-full">
@@ -189,12 +189,12 @@
 
         <!-- Bild -->
         <section>
-            <h3 class="font-semibold mb-2">Bild</h3>
-            <div class="mb-2">
+            <h3 class="font-semibold mb-1.5">Bild</h3>
+            <div class="mb-1">
                 <span class="font-mono text-xs">Brightness: </span><span class="value-brightness font-mono text-s"> N.A.</span>
                 <input type="range" min="0" max="15" step="1" class="picture-brightness w-full">
             </div>
-            <div class="mb-2">
+            <div class="mb-1">
                 <span class="font-mono text-xs">Saturation: </span><span class="value-saturation font-mono text-s"> N.A.</span>
                 <input type="range" min="0" max="15" step="1" class="picture-saturation w-full">
             </div>
@@ -206,16 +206,16 @@
 
         <!-- Presets -->
         <section>
-            <h3 class="font-semibold mb-2">Presets</h3>
+            <h3 class="font-semibold mb-1.5">Presets</h3>
             <div class="grid grid-cols-4 gap-2 text-sm">
-                <button class="btn load-preset" data-preset="1">L1</button>
-                <button class="btn load-preset" data-preset="2">L2</button>
-                <button class="btn load-preset" data-preset="3">L3</button>
-                <button class="btn load-preset" data-preset="4">L4</button>
-                <button class="btn store-preset" data-preset="1">S1</button>
-                <button class="btn store-preset" data-preset="2">S2</button>
-                <button class="btn store-preset" data-preset="3">S3</button>
-                <button class="btn store-preset" data-preset="4">S4</button>
+                <button class="btn load-preset mx-5 border border-black dark:border-white hover:border-cyan-500 dark:hover:border-cyan-500 rounded-md" data-preset="1">Load 1</button>
+                <button class="btn load-preset mx-5 border border-black dark:border-white hover:border-pink-500 dark:hover:border-pink-500 rounded-md" data-preset="2">Load 2</button>
+                <button class="btn load-preset mx-5 border border-black dark:border-white hover:border-violet-500 dark:hover:border-violet-500 rounded-md" data-preset="3">Load 3</button>
+                <button class="btn load-preset mx-5 border border-black dark:border-white hover:border-green-500 dark:hover:border-green-500 rounded-md" data-preset="4">Load 4</button>
+                <button class="btn store-preset mx-5 border border-black dark:border-white hover:border-cyan-500 dark:hover:border-cyan-500 rounded-md" data-preset="1">Store 1</button>
+                <button class="btn store-preset mx-5 border border-black dark:border-white hover:border-pink-500 dark:hover:border-pink-500 rounded-md" data-preset="2">Store 2</button>
+                <button class="btn store-preset mx-5 border border-black dark:border-white hover:border-violet-500 dark:hover:border-violet-500 rounded-md" data-preset="3">Store 3</button>
+                <button class="btn store-preset mx-5 border border-black dark:border-white hover:border-green-500 dark:hover:border-green-500 rounded-md" data-preset="4">Store 4</button>
             </div>
         </section>
     </div>
@@ -241,8 +241,9 @@ w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 f
 <style>
 
     .btn {
-        @apply bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-xl transition dark:bg-gray-300 dark:text-black dark:hover:bg-gray-200;
+        @apply border px-3 py-1 rounded-md transition-colors;
     }
+
 
     .select {
         @apply w-full px-3 py-2 rounded border text-sm shadow focus:outline-none focus:ring-2 focus:ring-blue-400;

@@ -95,15 +95,7 @@ Stabilität:
 
  TODO
 
-JS writing an dreading files:
-
- https://nodejs.org/en/learn/manipulating-files/writing-files-with-nodejs
-
- https://www.w3schools.com/xml/xml_parser.asp
-
- https://www.mediaevent.de/javascript/xml-mit-fetch.html
-
-
+- name der Kamera
 
 
 WB
@@ -112,13 +104,8 @@ OnepushWb ist wbmodeidx = 3
 Bei druck auf One push trigger Knopf
 {"wbmodeidx":"","crgain":"","cbgain":"","wbonepushtrigger":"[object Event]"}
 
-Manual red und Manual Blue sind nur im manual mode verfügbar
-manual ist wbmodeidx = 5
-Slider gehen von 0 bis 128 (beide)
 
 
-Tabs für Settingspage?
-https://www.w3schools.com/howto/howto_js_tabs.asp
 
 oder hier vlt
 https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Implement_a_settings_page
@@ -193,24 +180,6 @@ gamma
 
 
 
-in den presets wird nicht alles gesetzt, zum Beispiel exposure mode ist immer auf full auto bei jedem preset,
-auch wenn man es bei der preset Aufnahme geändert hat
-
-
--> Preset Buttons (weiße Zahl in der mitte) und den Screenshot vom preset in den Button reinladen
-Man sieht sofort welche schon belegt sind und mit was
 
 
 
---> Button richtig umrahmen lassen!
---> Fokus + - funktionen!!!!!
-
---> Andere templates laden, je nachdem wie viele textfelder (IPs) vergeben sind und damit die dynamische
-Darstellung faken!!
-
---> Roter und grüner Punkt oder so für Verbindungsstatus (regelmäßig abfragen? EventListener? vlt onChange oder sowas)
-
---> IP Adressfelder Eingabesicher machen
-
---> Fehlerbehandlungen einbauen:
-- Netzwerkkabel gezogen

@@ -39,11 +39,15 @@ window.addEventListener("DOMContentLoaded", async () => {
         container.className = `${gridClassBase} grid-cols-${gridCols}`;
 
 
-        cameraIPs.forEach((ip, index) => {
+        cameraIPs.forEach(async (ip) => {
             const clone = template.content.cloneNode(true);
             const wrapper = clone.querySelector(".camera-ui");
             wrapper.dataset.ip = ip;
-            wrapper.querySelector(".camera-label").textContent = `Kamera ${index + 1} (${ip})`;
+
+            const data = await window.electronAPI.getCameraData(ip);
+                wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
+
+
             container.appendChild(wrapper);
             initCameraUI(wrapper, ip);
         });
@@ -51,6 +55,23 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 //window.addEventListener("offline")
+/*
+async function test() {
+    testip = settings.cameraIPs[0];
+
+    try {
+        const data = await window.electronAPI.getCameraData(testip);
+        console.log(`Die abgerufenen Daten von ${testip}: `, data);
+    } catch (error) {
+        console.error(error);
+    }
+
+}
+
+
+test();
+*/
+
 
 setInterval(() => {
     const IPs = settings.cameraIPs;
@@ -74,7 +95,7 @@ setInterval(() => {
             setCameraStatus(ip, "offline");
         }
     });
-}, 5000); //Updates alle 5 Sekunden
+}, 3000); //Updates alle 3 Sekunden
 
 
 
@@ -121,7 +142,9 @@ async function refreshCameraUIs() {
         const clone = template.content.cloneNode(true);
         const wrapper = clone.querySelector(".camera-ui");
         wrapper.dataset.ip = ip;
-        wrapper.querySelector(".camera-label").textContent = `Kamera ${index + 1} (${ip})`;
+
+        console.log("DATA:CAMERANAME: ", data.cameraname);
+        wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
 
         container.appendChild(wrapper);
         initCameraUI(wrapper, ip);
@@ -166,7 +189,8 @@ function initCameraUI(wrapper, ip) {
         const focusRangeEl = wrapper.querySelector(".focus-range");
         const focusValueSpan = wrapper.querySelector(".value-focus-range");
 
-        //if (data.focusautoidx) focusModeEl.value = data.focusautoidx; //setzt den Wert von Fokusmdoe auf den tatsächlichen
+        //if (data.focusautoidx) focusModeEl.value = data.focusautoidx;
+        //setzt den Wert von Fokusmdoe auf den tatsächlichen
         //Wenn Fokusmode 2 oder 3 empfangen werden (was sie werden warum auch immer), setzt er den Modus erstmal manuell
         if (data.focusautoidx == "2" || data.focusautoidx == "3") {
             focusModeEl.value = "0";
@@ -184,6 +208,36 @@ function initCameraUI(wrapper, ip) {
         focusRangeEl.addEventListener("input", () => {
             focusValueSpan.textContent = focusRangeEl.value;
             window.electronAPI.setFocus("focuspositon", focusRangeEl.value, ip);
+        });
+
+        //Fokus in Button
+        wrapper.querySelector(".focus-in").addEventListener("click", () => {
+            let focusValue = parseInt(focusRangeEl.value ||0);
+            focusValue = Math.min(focusValue+1, 2409)
+
+            //UI updaten
+            focusRangeEl.value = focusValue;
+            focusValueSpan.textContent = focusValue;
+
+            //sende an Kamera
+            console.log("Ändere Wert auf: ", focusValue);
+            window.electronAPI.setFocus("focuspositon", focusValue.toString(), ip);
+
+        });
+
+        //Fokus out Button
+        wrapper.querySelector(".focus-out").addEventListener("click", () => {
+            let focusValue = parseInt(focusRangeEl.value ||0);
+            focusValue = Math.min(focusValue-1, 2409)
+
+            //UI updaten
+            focusRangeEl.value = focusValue;
+            focusValueSpan.textContent = focusValue;
+
+            //sende an Kamera
+            console.log("Ändere Wert auf: ", focusValue);
+            window.electronAPI.setFocus("focuspositon", focusValue.toString(), ip);
+
         });
 
         // White Balance

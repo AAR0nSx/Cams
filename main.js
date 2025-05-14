@@ -211,6 +211,8 @@ ipcMain.handle("set-focus", async(event, key, value, ip) => {
 
   payload[key] = value;
 
+  console.log("Payload vor try Block:", payload);
+
   try {
     const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetfocus.cgi`, {
       method: "POST",
@@ -219,8 +221,12 @@ ipcMain.handle("set-focus", async(event, key, value, ip) => {
       },
       body: JSON.stringify(payload)
     });
+    console.log("gesendete Fokus Payload an Kamera:", payload);
+
     const data = await response.json();
     console.log("Antwort der Kamera: ", data);
+    console.log("Focus angepasst auf: ", data.focuspositon);
+
     return {success: true, message: "Fokus angepasst: ", data};
 
   }catch(error){
