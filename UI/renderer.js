@@ -324,30 +324,82 @@ function initCameraUI(wrapper, ip) {
     });
 
     //presets
+    // Für jeden Preset-Lade-Button einen Listener
     wrapper.querySelectorAll(".load-preset").forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const presetNumber = button.dataset.preset;
-            window.electronAPI.getPreset(presetNumber, ip)
-                .then(response => {
-                    if (response.success) {
-                        window.electronAPI.getCameraData(ip)
-                            .then(data => applySettingsToUI(wrapper, data));
-                    }
-                });
+
+            // Sende Befehl an Kamera: Preset laden
+            const response = await window.electronAPI.getPreset(presetNumber, ip);
+
+            if (response.success) {
+                console.log(`Preset ${presetNumber} geladen für ${ip}, warte auf Stabilisierung...`);
+
+                // Warte, bis Zoom & Fokus sich nicht mehr ändern (langsamste Parameter, sollte soweit reichen wenn die fertig sind)
+                const finalData = await waitForStableCameraState(ip);
+
+                // Übernehme Werte in UI (nur wenn sie wirklich "fertig" sind)
+                applySettingsToUI(wrapper, finalData);
+
+                console.log("Preset vollständig übernommen und UI aktualisiert:", finalData);
+            } else {
+                console.warn("Preset konnte nicht geladen werden:", response.message);
+            }
         });
     });
 
+
+
+    /*
+     * Wartet, bis die Kamera "stabil" ist – also sich z.B. Zoom oder Fokus nicht mehr ändern.
+     * Dies verhindert, dass Zwischenwerte in die UI geschrieben werden.
+     * ip - IP-Adresse der Kamera
+     * timeout - Maximale Wartezeit in Millisekunden (Default: 5000ms)
+     * checkInterval - Prüfintervall in ms (Default: 300ms)
+     */
+    async function waitForStableCameraState(ip, timeout = 5000, checkInterval = 300) {
+        const maxAttempts = Math.ceil(timeout / checkInterval); // wie oft wir prüfen dürfen
+        let lastZoom = null;
+        let lastFocus = null;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const data = await window.electronAPI.getCameraData(ip); // aktuelle Kamera-Daten abrufen
+
+            // Wenn Zoom und Fokus sich nicht verändert haben -> Kamera ist "stabil"
+            if (
+                data.zoomposition === lastZoom &&
+                data.focuspositon === lastFocus
+            ) {
+                return data; // fertig, stabile Werte gefunden
+            }
+
+            // ansonsten merken wir uns die aktuellen Werte für den nächsten Vergleich
+            lastZoom = data.zoomposition;
+            lastFocus = data.focuspositon;
+
+            // kurze Pause bis zur nächsten Prüfung
+            await new Promise(res => setTimeout(res, checkInterval));
+        }
+
+        // Falls die Kamera innerhalb der Zeit nicht "stabil" wurde (Kameradaten haben sich nicht mehr geändert)
+        //gib die letzten Daten zurück
+        console.warn("Kamera wurde nicht stabil innerhalb Timeout.");
+        return await window.electronAPI.getCameraData(ip);
+    }
+
+
     wrapper.querySelectorAll(".store-preset").forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const presetNumber = button.dataset.preset;
-            const settings = collectCurrentSettings(wrapper); // Wichtig: wrapper!
-            window.electronAPI.setPreset(presetNumber, settings, ip)
-                .then(response => {
-                    console.log(response.message);
-                })
-                .catch(error => console.log(error));
+
+            // Aktuelle Werte direkt von der Kamera holen
+            const current = await window.electronAPI.getCameraData(ip);
+            await window.electronAPI.setPreset(presetNumber, ip);
+
+            console.log(`Preset ${presetNumber} gespeichert:`, current);
         });
     });
+
 
 
 }
@@ -357,6 +409,7 @@ function initCameraUI(wrapper, ip) {
 
 
 //Preset Hilfsfunktionen:
+/*
 function collectCurrentSettings(wrapper) {
     const selectors = [
         { key: "zoomposition", className: "zoom-slider" },
@@ -382,7 +435,7 @@ function collectCurrentSettings(wrapper) {
 
     return settings;
 }
-
+*/
 
 function applySettingsToUI(wrapper, cameraData) {
     const mapping = {

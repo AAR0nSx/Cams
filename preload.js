@@ -14,8 +14,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     setPicture: (key, value, ip) => ipcRenderer.invoke("set-picture", key, value, ip),
     setWhiteBalance: (key, value, ip) => ipcRenderer.invoke("set-white-balance", key, value, ip),
     setFocus: (key, value, ip) => ipcRenderer.invoke("set-focus", key, value, ip),
-    setPreset: (key, value, ip) => ipcRenderer.invoke("set-preset", key, value, ip),
-    getPreset: (key, value, ip) => ipcRenderer.invoke("get-preset", key, value, ip),
+    setPreset: (presetNumber, ip) => ipcRenderer.invoke("set-preset", presetNumber, ip),
+    getPreset: (presetNumber, ip) => ipcRenderer.invoke("get-preset", presetNumber, ip),
     getCameraData: (ip) => ipcRenderer.invoke("get-camera-data", ip),
 
     onUpdateCameraUIs: (callback) => ipcRenderer.on("update-camera-uis", () => callback()),

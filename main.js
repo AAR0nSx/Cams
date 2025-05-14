@@ -154,13 +154,16 @@ ipcMain.handle("get-camera-data", async (event, ip) => {
 
 
 //setPreset
-ipcMain.handle("set-preset", async (event, presetNumber, settings, ip) => {
+ipcMain.handle("set-preset", async (event, presetNumber, ip) => {
+  console.log("Rufe ip auf: ", ip);
   const payload = {
     savepreset: presetNumber,
-    settings: settings // wird später nicht direkt verarbeitet, aber mitgeschickt
+    loadpreset: ""
+    //settings: settings // wird später nicht direkt verarbeitet, aber mitgeschickt
   };
 
   try {
+
     const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpreset.cgi`, {
       method: "POST",
       headers: {
@@ -179,6 +182,7 @@ ipcMain.handle("set-preset", async (event, presetNumber, settings, ip) => {
 //getPreset
 ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
   const payload = {
+    savepreset: "",
     loadpreset: presetNumber
   };
 
@@ -191,7 +195,7 @@ ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
       body: JSON.stringify(payload),
     });
     const data = await response.json();
-    return { success: true, message: `Preset ${presetNumber} geladen`, data };
+    return { success: true, message: `Preset ${presetNumber} geladen`, data};
   } catch (error) {
     console.error("Fehler beim Laden:", ip, error);
     return { success: false, message: "Fehler beim Laden", error };
