@@ -67,10 +67,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-//Als Idee noch einen Listener für verlorene Verbindung?
-//window.addEventListener("offline")
-
-
 /*
 * Fragt regelmäßig (timeout) die Kameras nach Ihren Daten
 * Hat die Kamera eine bestimmte IP Adresse ist Sie online (98er Netz)
