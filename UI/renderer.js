@@ -20,59 +20,63 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // Wenn Kamera-UI aktualisiert werden soll
     window.electronAPI.onUpdateCameraUIs(async () => {
+        console.log("Empfange update-camera-uis Event");
         const latest = await window.electronAPI.getSettings();
         renderCameraUIs(latest.cameraIPs || []);
     });
+
 
     function updateDarkModeClass(enabled) {
         document.documentElement.classList.toggle("dark", enabled);
     }
 
     function renderCameraUIs(cameraIPs) {
+
         console.log("Render Camera UIs mit IPs (DOM loaded renderer):", cameraIPs);
 
         container.innerHTML = ""; // Alte UIs entfernen
 
         // Dynamische Grid-Klassen setzen
-        const gridClassBase = "grid gap-4 p-2 max-w-screen-2xl mx-auto";
+        const gridClassBase = "grid gap-4 px-2 max-w-screen-2xl mx-auto";
         const gridCols = Math.min(cameraIPs.length, 4); // Max. 4 Spalten
         container.className = `${gridClassBase} grid-cols-${gridCols}`;
 
 
         cameraIPs.forEach(async (ip) => {
+            console.log("Baue UI für:", ip);
+
             const clone = template.content.cloneNode(true);
             const wrapper = clone.querySelector(".camera-ui");
             wrapper.dataset.ip = ip;
 
-            const data = await window.electronAPI.getCameraData(ip);
-                wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
+            container.appendChild(wrapper); // UI immer einfügen
+            //Mit try wird die KameraUI immer gebaut, egal ob die promise bei getCamerdata() fehlschlägt
+            try {
+                const data = await window.electronAPI.getCameraData(ip);
+                console.log(`[${ip}] Kameradaten:`, data);
+                wrapper.querySelector(".camera-label").textContent = `${data?.cameraname} (${ip})` || `Kamera (${ip})`;
+                //Wenn der Name nicht gefunden werden kann, heißt Sie defauult: Kamera und die IP dahinter
+            } catch (error) {
+                console.warn(`⚠️ Fehler beim Abrufen der Daten für ${ip}:`, error);
+                wrapper.querySelector(".camera-label").textContent = `Kamera (${ip}) - Fehler`;
+            }
 
-
-            container.appendChild(wrapper);
-            initCameraUI(wrapper, ip);
+            initCameraUI(wrapper, ip); // Wird IMMER aufgerufen, auch bei Fehlern
         });
+
     }
 });
 
+//Als Idee noch einen Listener für verlorene Verbindung?
 //window.addEventListener("offline")
+
+
 /*
-async function test() {
-    testip = settings.cameraIPs[0];
-
-    try {
-        const data = await window.electronAPI.getCameraData(testip);
-        console.log(`Die abgerufenen Daten von ${testip}: `, data);
-    } catch (error) {
-        console.error(error);
-    }
-
-}
-
-
-test();
-*/
-
-
+* Fragt regelmäßig (timeout) die Kameras nach Ihren Daten
+* Hat die Kamera eine bestimmte IP Adresse ist Sie online (98er Netz)
+* Ist Sie im 21er Netz wird Sie gelb (online aber im falschen Netz)
+* Und wenn keine IP Adresse in den Kameradaten gefunden wird, ist Sie offline
+* */
 setInterval(() => {
     const IPs = settings.cameraIPs;
     IPs.forEach(async (ip) => {
@@ -100,6 +104,7 @@ setInterval(() => {
 
 
 //Statuslampe handler
+//Setzt den Punkt auf den Status der zuvor in setInterval() festgelegt wurde
 function setCameraStatus(ip, status) {
     console.log(`setCameraStatus(${ip}, ${status})`);
 
@@ -124,10 +129,12 @@ function setCameraStatus(ip, status) {
 
 
 //UI neu bauen bei speichern
+/*
 window.electronAPI.onUpdateCameraUIs(() => {
     console.log("Empfange update-camera-uis Event");
     refreshCameraUIs();
 });
+*/
 
 //refresh Camera UIs
 async function refreshCameraUIs() {
@@ -143,8 +150,8 @@ async function refreshCameraUIs() {
         const wrapper = clone.querySelector(".camera-ui");
         wrapper.dataset.ip = ip;
 
-        console.log("DATA:CAMERANAME: ", data.cameraname);
-        wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
+        //data = await electronAPI.getCameraData(ip);
+        //wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
 
         container.appendChild(wrapper);
         initCameraUI(wrapper, ip);
@@ -155,6 +162,8 @@ async function refreshCameraUIs() {
 
 //init Camera UI
 function initCameraUI(wrapper, ip) {
+
+
     console.log(`Initialisiere Kamera-UI für ${ip}`);
 
     console.log("Hole Kameradaten für IP (init Camera UI):", ip);

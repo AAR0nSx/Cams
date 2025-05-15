@@ -40,9 +40,11 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-0 font-sans">
 
-<div class="text-center mt-4">
-    <button class="btn" onclick="window.electronAPI.openSettings()">⚙️ Einstellungen</button>
+<div class="flex items-center justify-between px-4 py-2">
+    <img alt="Logo" src="./img/logo.svg" class="h-10 object-contain">
+    <button class="btn justify-self-end h-10" onclick="window.electronAPI.openSettings()">⚙️ Einstellungen</button>
 </div>
+
 
 <!-- Kamera Container, in den die UIs eingefügt werden, je nachdem wie viele es sein sollen -->
 <div id="camera-container" class=""></div>

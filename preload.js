@@ -1,6 +1,7 @@
 /*
+* Eine Art Adapter zwischen main.js und preload.js
 * Sichere Kommunikation zwischen main und renderer
-* Bindet IPC-API in den renderer ein
+* Bindet IPC-API in den renderer ein, damit die API der Kamera über z.B. Buttons nutzbar gemacht werden kann
 */
 
 const { contextBridge, ipcRenderer } = require("electron");

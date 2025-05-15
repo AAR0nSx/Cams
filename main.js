@@ -21,7 +21,7 @@ const store = new Store();
 let window;
 
 //console.log('electronApp:', electronApp);
-
+//Erstellt das main Window
 function createWindow() {
   const window = new electronBrowserWindow({
     x: 0,
@@ -65,32 +65,11 @@ electronApp.on("activate", () => {
   }
 });
 
-
-//zieht sich alle Kameradaten
-
-function getCameraData() {
-  return new Promise((resolve, reject) => {
-    needle.get("http://172.23.98.93/cgi-bin/lums_ndisetinfo.cgi", (error, response) => {
-      if (!error && response.statusCode === 200) {
-        let ptzObject_temp = {};
-        let ptz_settings = response.body.split("<br>").map(line => line.replace(/(\r\n|\n|\r)/gm, "").replace(/"/g, ""));
-
-        ptz_settings.forEach(line => {
-          const [key, value] = line.split("=");
-          if (key && value) ptzObject_temp[key] = value;
-        });
-
-        resolve(ptzObject_temp);
-      } else {
-        reject(error || new Error("Fehler beim Abrufen der Kameradaten."));
-      }
-    });
-  });
-}
-
-
-
-//IPC Handler
+/* IPC HANDLER
+* Die IPC Handler kümmern sich um den Aufruf des POST Befehls auf der Kamera
+* Jede Funktion hat eine URL unter der man sie mittels eines http POST Befehls ansprechen kann um die entsprechende
+* Funktion auszulösen.
+*/
 
 //Settingspage oeffnen
 ipcMain.on("open-settings", () => {
@@ -127,9 +106,6 @@ ipcMain.handle("set-settings", async (event, newSettings) => {
 
 
 
-
-
-
 //Kameradaten zum renderer schicken
 ipcMain.handle("get-camera-data", async (event, ip) => {
   const url = `http://${ip}/cgi-bin/lums_ndisetinfo.cgi`;
@@ -155,7 +131,6 @@ ipcMain.handle("get-camera-data", async (event, ip) => {
 
 //setPreset
 ipcMain.handle("set-preset", async (event, presetNumber, ip) => {
-  console.log("Rufe ip auf: ", ip);
   const payload = {
     savepreset: presetNumber,
     loadpreset: ""
