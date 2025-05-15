@@ -333,7 +333,9 @@ function initCameraUI(wrapper, ip) {
     wrapper.querySelectorAll(".load-preset").forEach(button => {
         button.addEventListener("click", async () => {
             const presetNumber = button.dataset.preset;
+            showLoader();
 
+            try{
             // Sende Befehl an Kamera: Preset laden
             const response = await window.electronAPI.getPreset(presetNumber, ip);
 
@@ -350,6 +352,14 @@ function initCameraUI(wrapper, ip) {
             } else {
                 console.warn("Preset konnte nicht geladen werden:", response.message);
             }
+
+            }catch(err){
+                console.error("Fehler beim Laden des Presets", err);
+            }finally{
+                hideLoader();
+            }
+
+
         });
     });
 
@@ -404,43 +414,9 @@ function initCameraUI(wrapper, ip) {
             console.log(`Preset ${presetNumber} gespeichert:`, current);
         });
     });
-
-
-
 }
-
-
-
-
 
 //Preset Hilfsfunktionen:
-/*
-function collectCurrentSettings(wrapper) {
-    const selectors = [
-        { key: "zoomposition", className: "zoom-slider" },
-        { key: "focusautoidx", className: "focus-mode" },
-        { key: "focuspositon", className: "focus-range" },
-        { key: "wbmodeidx", className: "wb-mode" },
-        { key: "crgain", className: "wb-manual-red" },
-        { key: "cbgain", className: "wb-manual-blue" },
-        { key: "brightness", className: "picture-brightness" },
-        { key: "saturation", className: "picture-saturation" },
-        { key: "sharpness", className: "picture-sharpness" },
-        { key: "exposuremodeindex", className: "exposure-mode" },
-        { key: "shuttermanualidx", className: "shutter" },
-        { key: "gainmanualidx", className: "gain" },
-        { key: "gammanameindex", className: "gamma" }
-    ];
-
-    const settings = {};
-    selectors.forEach(({ key, className }) => {
-        const el = wrapper.querySelector(`.${className}`);
-        if (el) settings[key] = el.value;
-    });
-
-    return settings;
-}
-*/
 
 function applySettingsToUI(wrapper, cameraData) {
     const mapping = {
@@ -471,4 +447,21 @@ function applySettingsToUI(wrapper, cameraData) {
             el.dispatchEvent(new Event("change", { bubbles: true }));
         }
     });
+}
+
+//Loader Handling wenn Presets geladen werden
+function showLoader() {
+    const loader = document.getElementById("global-loader");
+    if (loader) {
+        loader.classList.remove("hidden");
+        document.body.style.pointerEvents = "none"; // Interaktion blockieren
+    }
+}
+
+function hideLoader() {
+    const loader = document.getElementById("global-loader");
+    if (loader) {
+        loader.classList.add("hidden");
+        document.body.style.pointerEvents = ""; // Interaktion erlauben
+    }
 }
