@@ -336,22 +336,22 @@ function initCameraUI(wrapper, ip) {
             showLoader();
 
             try{
-            // Sende Befehl an Kamera: Preset laden
-            const response = await window.electronAPI.getPreset(presetNumber, ip);
+                // Sende Befehl an Kamera: Preset laden
+                const response = await window.electronAPI.getPreset(presetNumber, ip);
 
-            if (response.success) {
-                console.log(`Preset ${presetNumber} geladen für ${ip}, warte auf Stabilisierung...`);
+                if (response.success) {
+                    console.log(`Preset ${presetNumber} geladen für ${ip}, warte auf Stabilisierung...`);
 
-                // Warte, bis Zoom & Fokus sich nicht mehr ändern (langsamste Parameter, sollte soweit reichen wenn die fertig sind)
-                const finalData = await waitForStableCameraState(ip);
+                    // Warte, bis Zoom & Fokus sich nicht mehr ändern (langsamste Parameter, sollte soweit reichen wenn die fertig sind)
+                    const finalData = await waitForStableCameraState(ip);
 
-                // Übernehme Werte in UI (nur wenn sie wirklich "fertig" sind)
-                applySettingsToUI(wrapper, finalData);
+                    // Übernehme Werte in UI (nur wenn sie wirklich "fertig" sind)
+                    applySettingsToUI(wrapper, finalData);
 
-                console.log("Preset vollständig übernommen und UI aktualisiert:", finalData);
-            } else {
-                console.warn("Preset konnte nicht geladen werden:", response.message);
-            }
+                    console.log("Preset vollständig übernommen und UI aktualisiert:", finalData);
+                } else {
+                    console.warn("Preset konnte nicht geladen werden:", response.message);
+                }
 
             }catch(err){
                 console.error("Fehler beim Laden des Presets", err);

@@ -1,461 +1,663 @@
+alte package.json
+
+{
+  "name": "cam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "private": true,
+  "dependencies": {
+    "axios": "^1.9.0",
+    "electron": "^35.2.1",
+    "electron-store": "^10.0.1",
+    "jquery": "^3.7.1",
+    "jsdom": "^26.1.0",
+    "needle": "^3.3.1",
+    "tailwindcss": "^4.1.5"
+  }
+}
+
+
+
+
+neue package
+
+
+{
+  "name": "kamera-steuerung",
+  "version": "1.0.0",
+  "description": "Kamerasteuerung mit Electron",
+  "main": "main.js",
+  "author": "Aaron Standke",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.deinfirma.kamerasteuerung",
+    "productName": "KameraSteuerung",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist",
+      "!**/*.md",
+      "!**/node_modules/*/{test,__tests__}/**"
+    ],
+    "extraResources": [
+      "UI/**/*",
+      "img/**/*"
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "img/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "img/icon.icns"
+    }
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
+
+
+
+
+----------------
+
+"type": "module",
+muss in die package zu name, version usw.
+
+
+main mit import statt require
+
 /*
-* JS für die index.html
+* Hauptprozess
+* Steuert Eletron
 */
-console.log("renderer.js geladen.");
+
+//172.23.98.93 -> TestIP
+
+// Hauptprozess als ES Module
+import { app as electronApp, BrowserWindow, ipcMain } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
+import needle from "needle";
+import Store from "electron-store";
+
+// __dirname Ersatz
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// electron-store initialisieren
+const store = new Store();
 
 
 
-window.addEventListener("DOMContentLoaded", async () => {
-    const settings = await window.electronAPI.getSettings();
-    updateDarkModeClass(settings.darkMode);
+let window;
 
-    const container = document.getElementById("camera-container");
-    const template = document.getElementById("camera-template");
+//console.log('electronApp:', electronApp);
+//Erstellt das main Window
+function createWindow() {
+  window = new BrowserWindow({
+    x: 0,
+    y: 0,
+    width: 1920,
+    height: 1080,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"),
+    },
+  });
 
-    // Kamera-UIs anzeigen
-    renderCameraUIs(settings.cameraIPs || []);
+  window
+      .loadFile("./UI/index.html")
+      //.then(() => { window.webContents.send('sendSettings', settings.renderer); })
+      .then(() => {
+        window.show();
+        window.focus();
+      });
 
-    // Wenn Dark Mode sich später ändert
-    window.electronAPI.onDarkModeUpdate(updateDarkModeClass);
+  return window;
+}
 
-    // Wenn Kamera-UI aktualisiert werden soll
-    window.electronAPI.onUpdateCameraUIs(async () => {
-        const latest = await window.electronAPI.getSettings();
-        renderCameraUIs(latest.cameraIPs || []);
+electronApp.on("ready", () => {
+  window = createWindow();
+  window.webContents.openDevTools();
+  //sendSettings(settings);
+});
+
+electronApp.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    electronApp.quit();
+  }
+});
+
+electronApp.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+/* IPC HANDLER
+* Die IPC Handler kümmern sich um den Aufruf des POST Befehls auf der Kamera
+* Jede Funktion hat eine URL unter der man sie mittels eines http POST Befehls ansprechen kann um die entsprechende
+* Funktion auszulösen.
+*/
+
+//Settingspage oeffnen
+ipcMain.on("open-settings", () => {
+  const settingsWindow = new BrowserWindow({
+    width: 720,
+    height: 480,
+    resizable: false,
+    modal: true, //Child window das parent window disabled solange es offen ist
+    parent: window, // das Hauptfenster ist der Parent
+    webPreferences: {
+      contextIsolation: true,
+      preload: nodePath.join(__dirname, "./preload.js")
+    }
+  });
+
+  settingsWindow.loadFile("./UI/settings.html");
+});
+
+
+//settingsHandler
+ipcMain.handle("get-settings", async () => {
+  return store.get("settings", { darkMode: false });
+});
+
+ipcMain.handle("set-settings", async (event, newSettings) => {
+  store.set("settings", newSettings);
+  console.log("SENDE UPDATE AN FENSTER:", newSettings.darkMode); // <-- wichtig
+
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send("update-dark-mode", newSettings.darkMode);
+    window.webContents.send("update-camera-uis");
+  }
+});
+
+
+
+//Kameradaten zum renderer schicken
+ipcMain.handle("get-camera-data", async (event, ip) => {
+  const url = `http://${ip}/cgi-bin/lums_ndisetinfo.cgi`;
+  console.log("Frage Kamera ab (Main):", ip);
+  try {
+    const response = await needle("get", url);
+    if (response.statusCode === 200) {
+      const ptzObject = {};
+      response.body.split("<br>").forEach(line => {
+        const [key, value] = line.split("=");
+        if (key && value) ptzObject[key.replace(/"/g, "")] = value.replace(/"/g, "");
+      });
+      return ptzObject;
+    } else {
+      throw new Error(`Status ${response.statusCode}`);
+    }
+  } catch (err) {
+    console.error("Fehler für Kamera", ip, err);
+    return null;
+  }
+});
+
+
+//setPreset
+ipcMain.handle("set-preset", async (event, presetNumber, ip) => {
+  const payload = {
+    savepreset: presetNumber,
+    loadpreset: ""
+    //settings: settings // wird später nicht direkt verarbeitet, aber mitgeschickt
+  };
+
+  try {
+
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpreset.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return { success: true, message: `Preset ${presetNumber} gespeichert`, data };
+  } catch (error) {
+    console.error("Fehler beim Speichern:", ip,  error);
+    return { success: false, message: "Fehler beim Speichern", error };
+  }
+});
+
+//getPreset
+ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
+  const payload = {
+    savepreset: "",
+    loadpreset: presetNumber
+  };
+
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpreset.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    return { success: true, message: `Preset ${presetNumber} geladen`, data};
+  } catch (error) {
+    console.error("Fehler beim Laden:", ip, error);
+    return { success: false, message: "Fehler beim Laden", error };
+  }
+});
+
+
+
+//setFocus
+ipcMain.handle("set-focus", async(event, key, value, ip) => {
+  const payload = {
+    focusautoidx:"",
+    focuspositon:"",
+    afsensitivityidx:"",
+    afframenameidx:""
+  };
+
+  payload[key] = value;
+
+  console.log("Payload vor try Block:", payload);
+
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetfocus.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
+    console.log("gesendete Fokus Payload an Kamera:", payload);
+
+    const data = await response.json();
+    console.log("Antwort der Kamera: ", data);
+    console.log("Focus angepasst auf: ", data.focuspositon);
+
+    return {success: true, message: "Fokus angepasst: ", data};
+
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim setzen des Fokus. ", ip,  error);
+  }
+
+});
+
+
+
+//setWB
+ipcMain.handle("set-white-balance", async(event, key, value, ip) => {
+  const payload = {
+    wbmodeidx:"",
+    crgain:"",
+    cbgain:"",
+    wbonepushtrigger:""
+  };
+
+  payload[key] = value;
+
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetwb.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    console.log("Antwort der Kamera: ", data);
+    return {success: true, message: "Red/Blue angepasst: ", data};
+
+  }catch(error){
+    console.error(error);
+    console.log("Fehler beim setzen des Rot/Blau Werts. ", ip, error);
+  }
+
+});
+
+
+
+//setPicture
+ipcMain.handle("set-picture", async (event, key, value, ip) => {
+  const payload = {
+    brightness: "",
+    saturation: "",
+    sharpness: "",
+    img2dnrnameindex: "",
+    img3dnrnameindex: "",
+    mirrornameidx: ""
+  };
+
+  payload[key] = value;
+
+  console.log("Sende Bildwert:", payload);
+
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetpicture.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     });
 
-    function updateDarkModeClass(enabled) {
-        document.documentElement.classList.toggle("dark", enabled);
-    }
-
-    function renderCameraUIs(cameraIPs) {
-        console.log("Render Camera UIs mit IPs (DOM loaded renderer):", cameraIPs);
-
-        container.innerHTML = ""; // Alte UIs entfernen
-
-        // Dynamische Grid-Klassen setzen
-        const gridClassBase = "grid gap-4 px-2 max-w-screen-2xl mx-auto";
-        const gridCols = Math.min(cameraIPs.length, 4); // Max. 4 Spalten
-        container.className = `${gridClassBase} grid-cols-${gridCols}`;
+    const data = await response.json();
+    console.log("Antwort von Kamera (Picture):", data);
+    return { success: true, message: `${key} gesetzt auf ${value}` };
+  } catch (error) {
+    console.error("Fehler beim Setzen des Bildwerts:", ip, error);
+    return { success: false, message: `Fehler bei ${key}` };
+  }
+});
 
 
-        cameraIPs.forEach(async (ip) => {
-            const clone = template.content.cloneNode(true);
-            const wrapper = clone.querySelector(".camera-ui");
-            wrapper.dataset.ip = ip;
 
-            const data = await window.electronAPI.getCameraData(ip);
-                wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
+//set Exposure
+ipcMain.handle("set-exposure", async (event, key, value, ip) => {
+  const payload = {"exposuremodeindex":"","exposurelevelname":"","gainmanualidx":"","irispriidx":"","shuttermanualidx":"","gammanameindex":""};
+  //shuttermanualindex 0-21 für 1/1000 - 1/1
+  const keyMap = {
+    shutter: "shuttermanualidx",
+    gain: "gainmanualidx",
+    gamma: "gammanameindex",
+    exposuremode: "exposuremodeindex"
+  };
+
+  const mappedKey = keyMap[key] || key;
+  payload[mappedKey] = value;
+
+  console.log("Sende Einzelwert:", payload);
+
+  try{
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetexposure.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    console.log("Antwort von Kamera: ", data);
+    return {success: true, message: `${key} gesetzt auf ${value}` };
+  }catch(error){
+    console.error("Fehler beim Setzen:", ip, error);
+    return { success: false, message: `Fehler bei ${key}` };
+  }
+})
+
+//Zoom enhance fetch
+ipcMain.handle("zoom-enhance", async (event, zoomLevel, ip) => {
+  console.log("Zoom anpassen auf:", zoomLevel);
+
+  // Anfrage an Kamera senden
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetzoom.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zoompositionfromindex: zoomLevel.toString() }),
+    });
+
+    const data = await response.json();
+    console.log("Antwort von Kamera:", data);
+    console.log("Sende Zoom Update an Renderer: ", zoomLevel);
+    return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
+  } catch (error) {
+    console.error("Fehler beim Zoom:", ip, error);
+    return { success: false, message: "Fehler beim Zoom" };
+  }
+});
+
+//Zoom decrease
+ipcMain.handle("zoom-decrease", async (event, zoomLevel, ip) => {
+  console.log("Zoom anpassen auf:", zoomLevel);
+
+  // Anfrage an Kamera senden
+  try {
+    const response = await fetch(`http://${ip}/cgi-bin/lums_ndisetzoom.cgi`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zoompositionfromindex: zoomLevel.toString() }),
+    });
+
+    const data = await response.json();
+    console.log("Antwort von Kamera:", data);
+    console.log("Sende Zoom Update an Renderer: ", zoomLevel);
+    return { success: true, message: "Zoom erfolgreich angepasst auf " + zoomLevel.toString() };
+  } catch (error) {
+    console.error("Fehler beim Zoom:", ip, error);
+    return { success: false, message: "Fehler beim Zoom" };
+  }
+});
 
 
-            container.appendChild(wrapper);
-            initCameraUI(wrapper, ip);
+//move-camera behandelt alle Bewegungsbefehle
+
+ipcMain.on('move-camera', (event, direction, ip) => {
+  console.log("Nachricht empfangen im main Prozess.");
+
+
+  switch (direction) {
+    case "left":
+      if (direction === 'left') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_LEFT"
         });
-    }
-});
 
-//Als Idee noch einen Listener für verlorene Verbindung?
-//window.addEventListener("offline")
-
-
-/*
-* Fragt regelmäßig (timeout) die Kameras nach Ihren Daten
-* Hat die Kamera eine bestimmte IP Adresse ist Sie online (98er Netz)
-* Ist Sie im 21er Netz wird Sie gelb (online aber im falschen Netz)
-* Und wenn keine IP Adresse in den Kameradaten gefunden wird, ist Sie offline
-* */
-setInterval(() => {
-    const IPs = settings.cameraIPs;
-    IPs.forEach(async (ip) => {
-        try {
-            const data = await window.electronAPI.getCameraData(ip);
-            const cameraIP = data.netip?.trim(); //-> data.netip ? .trim (leerzeichen aus string entfernen) : data.netip = undefined
-
-            if (cameraIP?.startsWith("172.23.97") || cameraIP?.startsWith("172.23.98" || cameraIP?.startsWith("172.23.99"))) {
-                //console.log(`${cameraIP} ist: online`);
-                setCameraStatus(ip, "online");
-            } else if (cameraIP?.startsWith("172.23.21")) {
-                //console.log(`${cameraIP} ist: falsches Netz`);
-                setCameraStatus(ip, "warn");
-            } else {
-                //console.log(`${cameraIP} ist: offline`);
-                setCameraStatus(ip, "offline");
-            }
-        } catch (err) {
-            //console.warn(`Kamera ${ip} nicht erreichbar.`);
-            setCameraStatus(ip, "offline");
-        }
-    });
-}, 3000); //Updates alle 3 Sekunden
-
-
-
-//Statuslampe handler
-//Setzt den Punkt auf den Status der zuvor in setInterval() festgelegt wurde
-function setCameraStatus(ip, status) {
-    console.log(`setCameraStatus(${ip}, ${status})`);
-
-    const wrapper = document.querySelector(`.camera-ui[data-ip="${ip}"]`);
-    //console.log("Status setzen für IP:", ip, "Wrapper gefunden?", !!wrapper);
-    if (!wrapper) return;
-
-    const lampe = wrapper.querySelector(".status-lampe");
-    //console.log("Lampe gefunden?", !!lampe);
-    if (!lampe) return;
-
-    const classes = {
-        online: "status-lampe inline-flex h-4 w-4 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]",
-        offline: "status-lampe inline-flex h-4 w-4 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] opacity-80 gentle-ping",
-        warn: "status-lampe inline-flex h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] opacity-80 gentle-ping",
-    };
-
-    lampe.className = `status-lampe ${classes[status] || classes.warn}`;
-}
-
-
-
-
-//UI neu bauen bei speichern
-window.electronAPI.onUpdateCameraUIs(() => {
-    console.log("Empfange update-camera-uis Event");
-    refreshCameraUIs();
-});
-
-//refresh Camera UIs
-async function refreshCameraUIs() {
-    const container = document.getElementById("camera-container");
-    container.innerHTML = ""; // Alte UIs entfernen
-
-    const settings = await window.electronAPI.getSettings();
-    const cameraIPs = settings.cameraIPs || [];
-    const template = document.getElementById("camera-template");
-
-    cameraIPs.forEach((ip, index) => {
-        const clone = template.content.cloneNode(true);
-        const wrapper = clone.querySelector(".camera-ui");
-        wrapper.dataset.ip = ip;
-
-        //data = await electronAPI.getCameraData(ip);
-        //wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
-
-        container.appendChild(wrapper);
-        initCameraUI(wrapper, ip);
-    });
-}
-
-
-
-//init Camera UI
-function initCameraUI(wrapper, ip) {
-    console.log(`Initialisiere Kamera-UI für ${ip}`);
-
-    console.log("Hole Kameradaten für IP (init Camera UI):", ip);
-
-
-    // Kamera-Daten holen
-    window.electronAPI.getCameraData(ip).then(data => {
-        console.log(`[${ip}] Kameradaten:`, data);
-
-        // Zoom
-        const zoomLevelEl = wrapper.querySelector(".zoom-level");
-        const zoomSlider = wrapper.querySelector(".zoom-slider");
-        let currentZoom = parseFloat(data.zoomposition || 0);
-
-        const updateZoom = (value) => {
-            currentZoom = Math.max(0, Math.min(36, value));
-            zoomLevelEl.textContent = `${currentZoom.toFixed(1)}x`;
-            zoomSlider.value = currentZoom;
-
-            window.electronAPI.enhanceZoom(currentZoom, ip);
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
         };
 
-        zoomSlider.value = currentZoom;
-        zoomLevelEl.textContent = `${currentZoom.toFixed(1)}x`;
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
 
-        zoomSlider.addEventListener("input", () => updateZoom(parseFloat(zoomSlider.value)));
-        wrapper.querySelector(".zoom-in").addEventListener("click", () => updateZoom(currentZoom + 1));
-        wrapper.querySelector(".zoom-out").addEventListener("click", () => updateZoom(currentZoom - 1));
-
-        // Fokus
-        const focusModeEl = wrapper.querySelector(".focus-mode");
-        const focusRangeEl = wrapper.querySelector(".focus-range");
-        const focusValueSpan = wrapper.querySelector(".value-focus-range");
-
-        //if (data.focusautoidx) focusModeEl.value = data.focusautoidx;
-        //setzt den Wert von Fokusmdoe auf den tatsächlichen
-        //Wenn Fokusmode 2 oder 3 empfangen werden (was sie werden warum auch immer), setzt er den Modus erstmal manuell
-        if (data.focusautoidx == "2" || data.focusautoidx == "3") {
-            focusModeEl.value = "0";
-        }
-
-        if (data.focuspositon) {
-            focusRangeEl.value = data.focuspositon;
-            focusValueSpan.textContent = data.focuspositon;
-        }
-
-        focusModeEl.addEventListener("change", () => {
-            window.electronAPI.setFocus("focusautoidx", focusModeEl.value, ip);
+    case "right":
+      if (direction === 'right') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_RIGHT"
         });
 
-        focusRangeEl.addEventListener("input", () => {
-            focusValueSpan.textContent = focusRangeEl.value;
-            window.electronAPI.setFocus("focuspositon", focusRangeEl.value, ip);
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
+
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
+
+    case "up":
+      if (direction === 'up') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_UP"
         });
 
-        //Fokus in Button
-        wrapper.querySelector(".focus-in").addEventListener("click", () => {
-            let focusValue = parseInt(focusRangeEl.value ||0);
-            focusValue = Math.min(focusValue+1, 2409)
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
 
-            //UI updaten
-            focusRangeEl.value = focusValue;
-            focusValueSpan.textContent = focusValue;
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
 
-            //sende an Kamera
-            console.log("Ändere Wert auf: ", focusValue);
-            window.electronAPI.setFocus("focuspositon", focusValue.toString(), ip);
-
+    case "down":
+      if (direction === 'down') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_DOWN"
         });
 
-        //Fokus out Button
-        wrapper.querySelector(".focus-out").addEventListener("click", () => {
-            let focusValue = parseInt(focusRangeEl.value ||0);
-            focusValue = Math.min(focusValue-1, 2409)
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
 
-            //UI updaten
-            focusRangeEl.value = focusValue;
-            focusValueSpan.textContent = focusValue;
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
 
-            //sende an Kamera
-            console.log("Ändere Wert auf: ", focusValue);
-            window.electronAPI.setFocus("focuspositon", focusValue.toString(), ip);
-
+    case "up_left":
+      if (direction === 'up_left') {
+        const postData = JSON.stringify({
+          cmd: "PT_UP_LEFT"
         });
 
-        // White Balance
-        const wbModeEl = wrapper.querySelector(".wb-mode");
-        const onePushBtn = wrapper.querySelector(".one-push-wb");
-        const redSlider = wrapper.querySelector(".wb-manual-red");
-        const blueSlider = wrapper.querySelector(".wb-manual-blue");
-        const redValue = wrapper.querySelector(".value-manual-red");
-        const blueValue = wrapper.querySelector(".value-manual-blue");
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
 
-        wbModeEl.value = data.wbmodeidx || "0";
-        redSlider.value = data.crgain || "0";
-        blueSlider.value = data.cbgain || "0";
-        redValue.textContent = redSlider.value;
-        blueValue.textContent = blueSlider.value;
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
 
-        wbModeEl.addEventListener("change", () => {
-            window.electronAPI.setWhiteBalance("wbmodeidx", wbModeEl.value, ip);
-            onePushBtn.disabled = wbModeEl.value !== "3";
+    case "up_right":
+      if (direction === 'up_right') {
+        const postData = JSON.stringify({
+          cmd: "PT_UP_RIGHT"
         });
 
-        redSlider.addEventListener("input", () => {
-            redValue.textContent = redSlider.value;
-            window.electronAPI.setWhiteBalance("crgain", redSlider.value, ip);
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
+
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
+
+    case "down_left":
+      if (direction === 'down_left') {
+        const postData = JSON.stringify({
+          cmd: "PT_DOWN_LEFT"
         });
 
-        blueSlider.addEventListener("input", () => {
-            blueValue.textContent = blueSlider.value;
-            window.electronAPI.setWhiteBalance("cbgain", blueSlider.value, ip);
+        const options = {
+          headers: {
+            "Content-Type": "application/json",
+          }
+        };
+
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
+
+    case "down_right":
+      if (direction === 'down_right') {
+        const postData = JSON.stringify({
+          cmd: "PT_DOWN_RIGHT"
         });
 
-        onePushBtn.addEventListener("click", () => {
-            window.electronAPI.setWhiteBalance("wbonepushtrigger", "1", ip);
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
+
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
+        });
+      }
+      break;
+
+    case "stop":
+      if (direction === 'stop') {
+        const postData = JSON.stringify({
+          cmd: "PT_MOTOR_STOP"
         });
 
-        // Picture Settings
-        const picSettings = [
-            { key: "brightness", selector: "picture-brightness", valueSelector: "value-brightness" },
-            { key: "saturation", selector: "picture-saturation", valueSelector: "value-saturation" },
-            { key: "sharpness", selector: "picture-sharpness", valueSelector: "value-sharpness" }
-        ];
+        const options = {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        };
 
-        picSettings.forEach(({ key, selector, valueSelector }) => {
-            const input = wrapper.querySelector(`.${selector}`);
-            const span = wrapper.querySelector(`.${valueSelector}`);
-            if (data[key]) {
-                input.value = data[key];
-                span.textContent = data[key];
-            }
-
-            input.addEventListener("input", () => {
-                span.textContent = input.value;
-                window.electronAPI.setPicture(key, input.value, ip);
-            });
+        needle.post(`http://${ip}/cgi-bin/lums_ndipantilt.cgi`, postData, options, function (error, response) {
+          if (!error && response.statusCode == 200) {
+            console.log("Success:", response.body);
+          } else {
+            console.error("Request failed:", ip, error);
+          }
         });
+      }
+      break;
 
-        // Belichtung
-        const exposureFields = [
-            { key: "exposuremodeindex", selector: "exposure-mode" },
-            { key: "shuttermanualidx", selector: "shutter" },
-            { key: "gainmanualidx", selector: "gain" },
-            { key: "gammanameindex", selector: "gamma" }
-        ];
+    default:
+      console.log("Fehler beim Erkennen des Bewegungsbefehls.")
+      break;
+  }
 
-        exposureFields.forEach(({ key, selector }) => {
-            const el = wrapper.querySelector(`.${selector}`);
-            if (data[key]) el.value = data[key];
-
-            el.addEventListener("change", () => {
-                window.electronAPI.setExposure(key, el.value, ip);
-            });
-        });
-    });
-
-    // Bewegung
-    wrapper.querySelectorAll(".direction-button").forEach(button => {
-        const direction = button.dataset.direction;
-        button.addEventListener("mousedown", () => {
-            window.electronAPI.moveCamera(direction, ip);
-        });
-        const stop = () => window.electronAPI.moveCamera("stop", ip);
-        button.addEventListener("mouseup", stop);
-        button.addEventListener("mouseleave", stop);
-    });
-
-    //presets
-    // Für jeden Preset-Lade-Button einen Listener
-    wrapper.querySelectorAll(".load-preset").forEach(button => {
-        button.addEventListener("click", async () => {
-            const presetNumber = button.dataset.preset;
-
-            // Sende Befehl an Kamera: Preset laden
-            const response = await window.electronAPI.getPreset(presetNumber, ip);
-
-            if (response.success) {
-                console.log(`Preset ${presetNumber} geladen für ${ip}, warte auf Stabilisierung...`);
-
-                // Warte, bis Zoom & Fokus sich nicht mehr ändern (langsamste Parameter, sollte soweit reichen wenn die fertig sind)
-                const finalData = await waitForStableCameraState(ip);
-
-                // Übernehme Werte in UI (nur wenn sie wirklich "fertig" sind)
-                applySettingsToUI(wrapper, finalData);
-
-                console.log("Preset vollständig übernommen und UI aktualisiert:", finalData);
-            } else {
-                console.warn("Preset konnte nicht geladen werden:", response.message);
-            }
-        });
-    });
-
-
-
-    /*
-     * Wartet, bis die Kamera "stabil" ist – also sich z.B. Zoom oder Fokus nicht mehr ändern.
-     * Dies verhindert, dass Zwischenwerte in die UI geschrieben werden.
-     * ip - IP-Adresse der Kamera
-     * timeout - Maximale Wartezeit in Millisekunden (Default: 5000ms)
-     * checkInterval - Prüfintervall in ms (Default: 300ms)
-     */
-    async function waitForStableCameraState(ip, timeout = 5000, checkInterval = 300) {
-        const maxAttempts = Math.ceil(timeout / checkInterval); // wie oft wir prüfen dürfen
-        let lastZoom = null;
-        let lastFocus = null;
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const data = await window.electronAPI.getCameraData(ip); // aktuelle Kamera-Daten abrufen
-
-            // Wenn Zoom und Fokus sich nicht verändert haben -> Kamera ist "stabil"
-            if (
-                data.zoomposition === lastZoom &&
-                data.focuspositon === lastFocus
-            ) {
-                return data; // fertig, stabile Werte gefunden
-            }
-
-            // ansonsten merken wir uns die aktuellen Werte für den nächsten Vergleich
-            lastZoom = data.zoomposition;
-            lastFocus = data.focuspositon;
-
-            // kurze Pause bis zur nächsten Prüfung
-            await new Promise(res => setTimeout(res, checkInterval));
-        }
-
-        // Falls die Kamera innerhalb der Zeit nicht "stabil" wurde (Kameradaten haben sich nicht mehr geändert)
-        //gib die letzten Daten zurück
-        console.warn("Kamera wurde nicht stabil innerhalb Timeout.");
-        return await window.electronAPI.getCameraData(ip);
-    }
-
-
-    wrapper.querySelectorAll(".store-preset").forEach(button => {
-        button.addEventListener("click", async () => {
-            const presetNumber = button.dataset.preset;
-
-            // Aktuelle Werte direkt von der Kamera holen
-            const current = await window.electronAPI.getCameraData(ip);
-            await window.electronAPI.setPreset(presetNumber, ip);
-
-            console.log(`Preset ${presetNumber} gespeichert:`, current);
-        });
-    });
-
-
-
-}
-
-
-
-
-
-//Preset Hilfsfunktionen:
-/*
-function collectCurrentSettings(wrapper) {
-    const selectors = [
-        { key: "zoomposition", className: "zoom-slider" },
-        { key: "focusautoidx", className: "focus-mode" },
-        { key: "focuspositon", className: "focus-range" },
-        { key: "wbmodeidx", className: "wb-mode" },
-        { key: "crgain", className: "wb-manual-red" },
-        { key: "cbgain", className: "wb-manual-blue" },
-        { key: "brightness", className: "picture-brightness" },
-        { key: "saturation", className: "picture-saturation" },
-        { key: "sharpness", className: "picture-sharpness" },
-        { key: "exposuremodeindex", className: "exposure-mode" },
-        { key: "shuttermanualidx", className: "shutter" },
-        { key: "gainmanualidx", className: "gain" },
-        { key: "gammanameindex", className: "gamma" }
-    ];
-
-    const settings = {};
-    selectors.forEach(({ key, className }) => {
-        const el = wrapper.querySelector(`.${className}`);
-        if (el) settings[key] = el.value;
-    });
-
-    return settings;
-}
-*/
-
-function applySettingsToUI(wrapper, cameraData) {
-    const mapping = {
-        "zoomposition": "zoom-slider",
-        "focusautoidx": "focus-mode",
-        "focuspositon": "focus-range",
-        "wbmodeidx": "wb-mode",
-        "crgain": "wb-manual-red",
-        "cbgain": "wb-manual-blue",
-        "brightness": "picture-brightness",
-        "saturation": "picture-saturation",
-        "sharpness": "picture-sharpness",
-        "exposuremodeindex": "exposure-mode",
-        "shuttermanualidx": "shutter",
-        "gainmanualidx": "gain",
-        "gammanameindex": "gamma"
-    };
-
-    Object.entries(mapping).forEach(([cameraKey, className]) => {
-        const el = wrapper.querySelector(`.${className}`);
-        if (el && cameraData[cameraKey] !== undefined) {
-            el.value = cameraData[cameraKey];
-
-            const valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
-            if (valueSpan) valueSpan.textContent = cameraData[cameraKey];
-
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-            el.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-    });
-}
+});

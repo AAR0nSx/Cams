@@ -1,3 +1,4 @@
+
 /*
 * Hauptprozess
 * Steuert Eletron
@@ -6,11 +7,9 @@
 //172.23.98.93 -> TestIP
 
 const { app, BrowserWindow, ipcMain } = require("electron");
-const electronApp = require("electron").app;
-const electronBrowserWindow = require("electron").BrowserWindow;
 var needle = require("needle");
 const nodePath = require("path");
-const jsdom = require("jsdom");
+
 
 
 //settings
@@ -23,18 +22,34 @@ let window;
 //console.log('electronApp:', electronApp);
 //Erstellt das main Window
 function createWindow() {
-  const window = new electronBrowserWindow({
+  window = new BrowserWindow({
     x: 0,
     y: 0,
     width: 1920,
     height: 1080,
-    show: false,
+    show: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: nodePath.join(__dirname, "preload.js"),
     },
   });
+
+
+
+  const path = require('path');
+  const indexPath = path.join(__dirname, 'UI', 'index.html');
+
+  window.loadFile(indexPath)
+      .then(() => {
+        window.show();
+        window.focus();
+      })
+
+
+
+/*
+  window.loadFile(nodePath.join(__dirname, 'UI', 'index.html'))
 
   window
       .loadFile("./UI/index.html")
@@ -43,24 +58,33 @@ function createWindow() {
         window.show();
         window.focus();
       });
+*/
 
   return window;
 }
-
-electronApp.on("ready", () => {
+/*
+app.whenReady()
+    .then(() => {
+      createWindow();
+      //window.webContents.openDevTools() //nur für debugging benötigt!
+    });
+*/
+app.on("ready", () => {
   window = createWindow();
   window.webContents.openDevTools();
   //sendSettings(settings);
 });
 
-electronApp.on("window-all-closed", () => {
+
+
+app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     electronApp.quit();
   }
 });
 
-electronApp.on("activate", () => {
-  if (electronBrowserWindow.getAllWindows().length === 0) {
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
@@ -76,6 +100,7 @@ ipcMain.on("open-settings", () => {
   const settingsWindow = new BrowserWindow({
     width: 720,
     height: 480,
+    show: true,
     resizable: false,
     modal: true, //Child window das parent window disabled solange es offen ist
     parent: window, // das Hauptfenster ist der Parent

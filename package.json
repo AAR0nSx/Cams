@@ -1,20 +1,56 @@
 {
-  "name": "cam",
+  "name": "newtek_ndi_control",
   "version": "1.0.0",
-  "description": "",
+  "description": "Kamerasteuerung mit Electron",
+  "author": "Aaron Standke",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder"
   },
-  "private": true,
+  "build": {
+    "appId": "com.deinfirma.kamerasteuerung",
+    "asar": false,
+    "productName": "NewTek NDI Control",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "UI/**/*",
+      "img/**/*",
+      "preload.js",
+      "!dist",
+      "!**/*.md",
+      "!**/node_modules/*/{test,__tests__}/**"
+    ]
+  ,
+
+    "extraResources": [
+    ],
+
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "UI/img/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "UI/img/icon.icns",
+      "hardenedRuntime": false,
+      "entitlements": null,
+      "gatekeeperAssess": false,
+      "identity": null
+    }
+
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.3"
+  },
   "dependencies": {
-    "axios": "^1.9.0",
-    "electron": "^35.2.1",
-    "electron-store": "^10.0.1",
-    "jquery": "^3.7.1",
-    "jsdom": "^26.1.0",
-    "needle": "^3.3.1",
-    "tailwindcss": "^4.1.5"
+    "electron-store": "^8.2.0",
+    "needle": "^3.3.1"
   }
 }
