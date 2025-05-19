@@ -114,8 +114,8 @@ function setCameraStatus(ip, status) {
 
     const classes = {
         online: "status-lampe inline-flex h-4 w-4 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]",
-        offline: "status-lampe inline-flex h-4 w-4 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] opacity-80 gentle-ping",
-        warn: "status-lampe inline-flex h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] opacity-80 gentle-ping",
+        offline: "status-lampe inline-flex h-4 w-4 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]",
+        warn: "status-lampe inline-flex h-4 w-4 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]",
     };
 
     lampe.className = `status-lampe ${classes[status] || classes.warn}`;

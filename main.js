@@ -71,7 +71,7 @@ app.whenReady()
 */
 app.on("ready", () => {
   window = createWindow();
-  window.webContents.openDevTools();
+  window.webContents.openDevTools(); //nur für debugging benötigt
   //sendSettings(settings);
 });
 
@@ -79,7 +79,8 @@ app.on("ready", () => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    electronApp.quit();
+    electronApp.quit(); //eigl müsste es app.quit() heißen, aber ich will es erstmal im ganzen testen bevor ich
+                        //das ändere, falls Komplikationen auftreten
   }
 });
 
