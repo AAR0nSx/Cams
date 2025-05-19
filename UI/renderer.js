@@ -122,17 +122,8 @@ function setCameraStatus(ip, status) {
 }
 
 
-
-
-//UI neu bauen bei speichern
-/*
-window.electronAPI.onUpdateCameraUIs(() => {
-    console.log("Empfange update-camera-uis Event");
-    refreshCameraUIs();
-});
-*/
-
 //refresh Camera UIs
+/*
 async function refreshCameraUIs() {
     const container = document.getElementById("camera-container");
     container.innerHTML = ""; // Alte UIs entfernen
@@ -153,7 +144,7 @@ async function refreshCameraUIs() {
         initCameraUI(wrapper, ip);
     });
 }
-
+*/
 
 
 //init Camera UI
@@ -304,7 +295,8 @@ function initCameraUI(wrapper, ip) {
             { key: "exposuremodeindex", selector: "exposure-mode" },
             { key: "shuttermanualidx", selector: "shutter" },
             { key: "gainmanualidx", selector: "gain" },
-            { key: "gammanameindex", selector: "gamma" }
+            { key: "gammanameindex", selector: "gamma" },
+            { key: "exposurelevelname", selector: "value-exposure-compensation"}
         ];
 
         exposureFields.forEach(({ key, selector }) => {
@@ -315,6 +307,42 @@ function initCameraUI(wrapper, ip) {
                 window.electronAPI.setExposure(key, el.value, ip);
             });
         });
+
+
+        //Exposure Compensation
+        const ecValueEl = wrapper.querySelector(".value-exposure-compensation");
+
+        // Initialwert aus Kamera setzen
+        if (data.exposurelevelname !== undefined) {
+            ecValueEl.textContent = data.exposurelevelname;
+        }
+
+        // Funktion zum Aktualisieren
+        const updateExposureCompensation = (delta) => {
+            let currentValue = parseInt(ecValueEl.textContent || "0", 10);
+            currentValue = Math.max(0, Math.min(currentValue + delta, 10)); // Begrenzung zwischen 0–10
+
+            // UI aktualisieren
+            ecValueEl.textContent = currentValue;
+
+            // Wert an Kamera senden
+            console.log(`Ändere Exposure Compensation auf: ${currentValue}`);
+            window.electronAPI.setExposure("exposurelevelname", currentValue.toString(), ip);
+        };
+
+        // Event Listener für Buttons
+        wrapper.querySelector(".increase-exposure-compensation").addEventListener("click", () => {
+            updateExposureCompensation(1);
+        });
+
+        wrapper.querySelector(".decrease-exposure-compensation").addEventListener("click", () => {
+            updateExposureCompensation(-1);
+        });
+
+
+
+
+
     });
 
     // Bewegung

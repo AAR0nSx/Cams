@@ -316,6 +316,7 @@ ipcMain.handle("set-exposure", async (event, key, value, ip) => {
   //shuttermanualindex 0-21 für 1/1000 - 1/1
   const keyMap = {
     shutter: "shuttermanualidx",
+    exposurecompensation: "exposurelevelname",
     gain: "gainmanualidx",
     gamma: "gammanameindex",
     exposuremode: "exposuremodeindex"
