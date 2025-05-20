@@ -6,7 +6,7 @@
 
 //172.23.98.93 -> TestIP
 
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 var needle = require("needle");
 const nodePath = require("path");
 
@@ -52,7 +52,7 @@ function createWindow() {
 
 app.on("ready", () => {
   window = createWindow();
-  //window.webContents.openDevTools(); //nur für debugging benötigt
+  window.webContents.openDevTools(); //nur für debugging benötigt
   //sendSettings(settings);
 });
 
@@ -76,6 +76,13 @@ app.on("activate", () => {
 * Jede Funktion hat eine URL unter der man sie mittels eines http POST Befehls ansprechen kann um die entsprechende
 * Funktion auszulösen.
 */
+
+//neues fenster bei IP adressen klick für das Webinterface
+ipcMain.on("open-browser-window", (event, url) => {
+  console.log("MAIN: ÖFFNE IM BROWSER: ", url);
+  shell.openExternal(url); // öffnet im Standardbrowser
+});
+
 
 //Settingspage oeffnen
 ipcMain.on("open-settings", () => {

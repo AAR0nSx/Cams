@@ -4,10 +4,13 @@
 * Bindet IPC-API in den renderer ein, damit die API der Kamera über z.B. Buttons nutzbar gemacht werden kann
 */
 
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge,shell,  ipcRenderer } = require("electron");
 
 //Bridge zu Main
 contextBridge.exposeInMainWorld("electronAPI", {
+
+    //Öffnet BrowserWindow bei Klick auf iP adresse für Webinterface Weiterleitung
+    openExternal: (url) => ipcRenderer.send("open-browser-window", url),
 
     enhanceZoom: (zoomLevel, ip) => ipcRenderer.invoke("zoom-enhance", zoomLevel, ip),
     decreaseZoom: (zoomLevel, ip) => ipcRenderer.invoke("zoom-decrease", zoomLevel, ip),
@@ -39,6 +42,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     //sofortiges Updaten des Darkmode
     onDarkModeUpdate: (callback) => ipcRenderer.on("update-dark-mode", (event, value) => callback(value)),
 });
+
 
 
 

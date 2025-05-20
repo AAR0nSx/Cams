@@ -1,6 +1,7 @@
 /*
 * JS für die index.html
 */
+
 console.log("renderer.js geladen.");
 
 
@@ -53,10 +54,28 @@ window.addEventListener("DOMContentLoaded", async () => {
             container.appendChild(wrapper); // UI immer einfügen
             //Mit try wird die KameraUI immer gebaut, egal ob die promise bei getCamerdata() fehlschlägt
             try {
+                console.log("electronAPI verfügbar?", window.electronAPI);
+
                 const data = await window.electronAPI.getCameraData(ip);
                 console.log(`[${ip}] Kameradaten:`, data);
-                wrapper.querySelector(".camera-label").textContent = `${data?.cameraname} (${ip})` || `Kamera (${ip})`;
-                //Wenn der Name nicht gefunden werden kann, heißt Sie defauult: Kamera und die IP dahinter
+                //ist netip vorhanden
+                if (data?.netip) {
+
+                    if (data?.netip) {
+
+                        wrapper.querySelector(".camera-label").textContent = `${data?.cameraname} (${ip})`;
+                        //Wenn man auf das Label klickt, wird man zum Webinterface geleitet
+                        wrapper.querySelector(".camera-label").addEventListener("click", () => {
+                            window.electronAPI.openExternal(`http://${ip}`);
+                        });
+                    }
+
+                    //Wenn netip nicht verfügbar:
+                } else {
+                    wrapper.querySelector(".camera-label").textContent = `Kamera (${ip})`;
+                }
+
+                //Wenn der Name nicht gefunden werden kann, heißt Sie default: Kamera und die IP dahinter
             } catch (error) {
                 console.warn(`⚠️ Fehler beim Abrufen der Daten für ${ip}:`, error);
                 wrapper.querySelector(".camera-label").textContent = `Kamera (${ip}) - Fehler`;
@@ -67,6 +86,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     }
 });
+
 
 /*
 * Fragt regelmäßig (timeout) die Kameras nach Ihren Daten
@@ -292,16 +312,22 @@ function initCameraUI(wrapper, ip) {
 
         // Funktion zum Aktualisieren
         const updateExposureCompensation = (delta) => {
-            let currentValue = parseInt(ecValueEl.textContent || "0", 10);
-            currentValue = Math.max(0, Math.min(currentValue + delta, 10)); // Begrenzung zwischen 0–10
+            // interner Wert (0–10)
+            let currentValue = parseInt(ecValueEl.dataset.rawValue || "5", 10); // Default: 5
 
-            // UI aktualisieren
-            ecValueEl.textContent = currentValue;
+            currentValue = Math.max(0, Math.min(currentValue + delta, 10));
 
-            // Wert an Kamera senden
-            console.log(`Ändere Exposure Compensation auf: ${currentValue}`);
+            // Kamera-Wert setzen
+            console.log(`Setze Exposure Compensation auf Kamera-Wert: ${currentValue}`);
             window.electronAPI.setExposure("exposurelevelname", currentValue.toString(), ip);
+
+            // UI aktualisieren (anzeigen mit Offset -5)
+            ecValueEl.dataset.rawValue = currentValue; // Speichern im Element
+            ecValueEl.textContent = currentValue - 5;
+
+            console.log("Anzeige im UI aktualisiert auf:", currentValue - 5);
         };
+
 
         // Event Listener für Buttons
         wrapper.querySelector(".increase-exposure-compensation").addEventListener("click", () => {
@@ -334,7 +360,8 @@ function initCameraUI(wrapper, ip) {
     wrapper.querySelectorAll(".load-preset").forEach(button => {
         button.addEventListener("click", async () => {
             const presetNumber = button.dataset.preset;
-            showLoader();
+            console.log("Der loader kommt an folgende Ip adresse ran: ", ip);
+            showLoader(wrapper);
 
             try{
                 // Sende Befehl an Kamera: Preset laden
@@ -357,10 +384,22 @@ function initCameraUI(wrapper, ip) {
             }catch(err){
                 console.error("Fehler beim Laden des Presets", err);
             }finally{
-                hideLoader();
+                hideLoader(wrapper);
             }
 
 
+        });
+    });
+
+    wrapper.querySelectorAll(".store-preset").forEach(button => {
+        button.addEventListener("click", async () => {
+            const presetNumber = button.dataset.preset;
+
+            // Aktuelle Werte direkt von der Kamera holen
+            const current = await window.electronAPI.getCameraData(ip);
+            await window.electronAPI.setPreset(presetNumber, ip);
+
+            console.log(`Preset ${presetNumber} gespeichert:`, current);
         });
     });
 
@@ -403,17 +442,7 @@ function initCameraUI(wrapper, ip) {
         return await window.electronAPI.getCameraData(ip);
     }
 
-    wrapper.querySelectorAll(".store-preset").forEach(button => {
-        button.addEventListener("click", async () => {
-            const presetNumber = button.dataset.preset;
 
-            // Aktuelle Werte direkt von der Kamera holen
-            const current = await window.electronAPI.getCameraData(ip);
-            await window.electronAPI.setPreset(presetNumber, ip);
-
-            console.log(`Preset ${presetNumber} gespeichert:`, current);
-        });
-    });
 }
 
 //Preset Hilfsfunktionen:
@@ -449,6 +478,7 @@ function applySettingsToUI(wrapper, cameraData) {
 }
 
 //Loader Handling wenn Presets geladen werden
+/*
 function showLoader() {
     const loader = document.getElementById("global-loader");
     if (loader) {
@@ -462,5 +492,24 @@ function hideLoader() {
     if (loader) {
         loader.classList.add("hidden");
         document.body.style.pointerEvents = ""; // Interaktion erlauben
+    }
+}
+*/
+//Loader und hider mit wrapper gebundenen Funktionen
+function showLoader(wrapper) {
+    const loader = wrapper.querySelector(".local-loader");
+    if (loader) {
+        loader.classList.remove("hidden");
+        wrapper.style.pointerEvents = "none";
+        wrapper.style.opacity = "0.6"; // Optional: visuelles Feedback
+    }
+}
+
+function hideLoader(wrapper) {
+    const loader = wrapper.querySelector(".local-loader");
+    if (loader) {
+        loader.classList.add("hidden");
+        wrapper.style.pointerEvents = "";
+        wrapper.style.opacity = "";
     }
 }

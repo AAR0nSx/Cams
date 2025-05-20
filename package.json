@@ -1,6 +1,6 @@
 {
   "name": "newtek_ndi_control",
-  "version": "1.0.0BETA",
+  "version": "1.0.1BETA",
   "description": "NDI Kamerasteuerung mit Electron",
   "author": "Aaron Standke",
   "main": "main.js",
@@ -23,11 +23,8 @@
       "!dist",
       "!**/*.md",
       "!**/node_modules/*/{test,__tests__}/**"
-    ]
-  ,
-    "extraResources": [
     ],
-
+    "extraResources": [],
     "win": {
       "target": [
         "nsis"
@@ -49,6 +46,7 @@
   },
   "dependencies": {
     "electron-store": "^8.2.0",
-    "needle": "^3.3.1"
+    "needle": "^3.3.1",
+    "open": "^10.1.2"
   }
 }
