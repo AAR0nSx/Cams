@@ -178,10 +178,12 @@ function initCameraUI(wrapper, ip) {
         const focusRangeEl = wrapper.querySelector(".focus-range");
         const focusValueSpan = wrapper.querySelector(".value-focus-range");
 
-        //if (data.focusautoidx) focusModeEl.value = data.focusautoidx;
+        //Auto = 1,2, Manuell = 0,3
         //setzt den Wert von Fokusmdoe auf den tatsächlichen
-        //Wenn Fokusmode 2 oder 3 empfangen werden (was sie werden warum auch immer), setzt er den Modus erstmal manuell
-        if (data.focusautoidx == "2" || data.focusautoidx == "3") {
+        //Wenn Fokusmode 2 oder 3 empfangen werden
+        if (data.focusautoidx == "2") {
+            focusModeEl.value = "1";
+        } else if (data.focusautoidx == "3") {
             focusModeEl.value = "0";
         }
 
@@ -237,6 +239,7 @@ function initCameraUI(wrapper, ip) {
         const redValue = wrapper.querySelector(".value-manual-red");
         const blueValue = wrapper.querySelector(".value-manual-blue");
 
+        //setzt UI Werte auf die entsprechenden Werte || 0
         wbModeEl.value = data.wbmodeidx || "0";
         redSlider.value = data.crgain || "0";
         blueSlider.value = data.cbgain || "0";
@@ -413,7 +416,7 @@ function initCameraUI(wrapper, ip) {
      * checkInterval - Prüfintervall in ms (Default: 300ms)
      */
     async function waitForStableCameraState(ip, timeout = 5000, checkInterval = 300) {
-        const maxAttempts = Math.ceil(timeout / checkInterval); // wie oft wir prüfen dürfen
+        const maxAttempts = Math.ceil(timeout / checkInterval); // 5000/300 = 16.3 -> 17mal, wie oft wir prüfen dürfen
         let lastZoom = null;
         let lastFocus = null;
 
@@ -432,7 +435,10 @@ function initCameraUI(wrapper, ip) {
             lastZoom = data.zoomposition;
             lastFocus = data.focuspositon;
 
-            // kurze Pause bis zur nächsten Prüfung
+            //JS hat keine sleep() Funktion
+            //Also: Asyncron ein neues Promise erschaffen, dass pro Schleifendurchlauf
+            //checkInterval-lange verzögert, bis res aufgerufen wird
+            //(-> wird res aufgerufen, wird das promise Objekt aufgelöst und der Code geht normal weiter)
             await new Promise(res => setTimeout(res, checkInterval));
         }
 
@@ -465,10 +471,19 @@ function applySettingsToUI(wrapper, cameraData) {
 
     Object.entries(mapping).forEach(([cameraKey, className]) => {
         const el = wrapper.querySelector(`.${className}`);
+
         if (el && cameraData[cameraKey] !== undefined) {
             el.value = cameraData[cameraKey];
 
             const valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
+            if (className === "focus-mode"){
+                if(cameraData.focusautoidx === "2"){ //auto
+                    console.log("ES IST 2"); //setze hier auf Auto
+                }else if(cameraData.focusautoidx === "3"){ //manual
+                    console.log("ES IST 3"); //setze hier auf manuell
+                }
+            }
+
             if (valueSpan) valueSpan.textContent = cameraData[cameraKey];
 
             el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -477,24 +492,6 @@ function applySettingsToUI(wrapper, cameraData) {
     });
 }
 
-//Loader Handling wenn Presets geladen werden
-/*
-function showLoader() {
-    const loader = document.getElementById("global-loader");
-    if (loader) {
-        loader.classList.remove("hidden");
-        document.body.style.pointerEvents = "none"; // Interaktion blockieren
-    }
-}
-
-function hideLoader() {
-    const loader = document.getElementById("global-loader");
-    if (loader) {
-        loader.classList.add("hidden");
-        document.body.style.pointerEvents = ""; // Interaktion erlauben
-    }
-}
-*/
 //Loader und hider mit wrapper gebundenen Funktionen
 function showLoader(wrapper) {
     const loader = wrapper.querySelector(".local-loader");
