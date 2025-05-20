@@ -65,21 +65,6 @@
             .filter(ip => ip);
     }
 
-
-    //IP Adressen Felder
-    /*
-    document.getElementById("saveIPs").addEventListener("click", () => {
-        const ips = Array.from(document.querySelectorAll(".ip-field"))
-            .map(input => input.value.trim())
-            .filter(ip => ip); // leere rausfiltern
-
-        const settings = { darkMode: document.getElementById("darkModeToggle").checked, cameraIPs: ips };
-        window.electronAPI.setSettings(settings);
-        localStorage.setItem("electron-settings", JSON.stringify(settings));
-    });
-    */
-
-
     //Settings Speichern button
     document.getElementById("saveIPs").addEventListener("click", () => {
         const settings = {

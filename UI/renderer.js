@@ -4,7 +4,8 @@
 console.log("renderer.js geladen.");
 
 
-
+// Setup sobald das DOM geladen wurde
+// UI Initialisierung anstoßen
 window.addEventListener("DOMContentLoaded", async () => {
     const settings = await window.electronAPI.getSettings();
     updateDarkModeClass(settings.darkMode);
@@ -121,16 +122,12 @@ function setCameraStatus(ip, status) {
     lampe.className = `status-lampe ${classes[status] || classes.warn}`;
 }
 
-
-
 //init Camera UI
+//Initialisiert das UI anhand der Werte die getCameraData() zurückgibt
 function initCameraUI(wrapper, ip) {
 
-
     console.log(`Initialisiere Kamera-UI für ${ip}`);
-
     console.log("Hole Kameradaten für IP (init Camera UI):", ip);
-
 
     // Kamera-Daten holen
     window.electronAPI.getCameraData(ip).then(data => {
@@ -406,7 +403,6 @@ function initCameraUI(wrapper, ip) {
         return await window.electronAPI.getCameraData(ip);
     }
 
-
     wrapper.querySelectorAll(".store-preset").forEach(button => {
         button.addEventListener("click", async () => {
             const presetNumber = button.dataset.preset;
@@ -421,7 +417,6 @@ function initCameraUI(wrapper, ip) {
 }
 
 //Preset Hilfsfunktionen:
-
 function applySettingsToUI(wrapper, cameraData) {
     const mapping = {
         "zoomposition": "zoom-slider",

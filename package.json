@@ -25,7 +25,6 @@
       "!**/node_modules/*/{test,__tests__}/**"
     ]
   ,
-
     "extraResources": [
     ],
 
@@ -43,7 +42,6 @@
       "gatekeeperAssess": false,
       "identity": null
     }
-
   },
   "devDependencies": {
     "electron": "^29.0.0",

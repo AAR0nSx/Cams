@@ -138,6 +138,7 @@ ipcMain.handle("get-camera-data", async (event, ip) => {
 
 //setPreset
 ipcMain.handle("set-preset", async (event, presetNumber, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {
     savepreset: presetNumber,
     loadpreset: ""
@@ -163,6 +164,7 @@ ipcMain.handle("set-preset", async (event, presetNumber, ip) => {
 
 //getPreset
 ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {
     savepreset: "",
     loadpreset: presetNumber
@@ -188,6 +190,7 @@ ipcMain.handle("get-preset", async (event, presetNumber, ip) => {
 
 //setFocus
 ipcMain.handle("set-focus", async(event, key, value, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {
     focusautoidx:"",
     focuspositon:"",
@@ -226,6 +229,7 @@ ipcMain.handle("set-focus", async(event, key, value, ip) => {
 
 //setWB
 ipcMain.handle("set-white-balance", async(event, key, value, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {
     wbmodeidx:"",
     crgain:"",
@@ -258,6 +262,7 @@ ipcMain.handle("set-white-balance", async(event, key, value, ip) => {
 
 //setPicture
 ipcMain.handle("set-picture", async (event, key, value, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {
     brightness: "",
     saturation: "",
@@ -293,6 +298,7 @@ ipcMain.handle("set-picture", async (event, key, value, ip) => {
 
 //set Exposure
 ipcMain.handle("set-exposure", async (event, key, value, ip) => {
+  //payload enthält die cgi Schnittpunkte, wie sie auch in der Kamera heißen
   const payload = {"exposuremodeindex":"","exposurelevelname":"","gainmanualidx":"","irispriidx":"","shuttermanualidx":"","gammanameindex":""};
   //shuttermanualindex 0-21 für 1/1000 - 1/1
   const keyMap = {
