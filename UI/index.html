@@ -40,8 +40,8 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-0 font-sans">
 
-<div class="flex items-center justify-between px-4 py-2">
-    <img alt="Logo" src="./img/logo.svg" class="h-10 object-contain">
+<div class="flex items-center justify-between px-4 py-0">
+    <img alt="Logo" src="./img/logo.svg" class="h-10 object-contain py-1">
     <button class="btn justify-self-end h-10" onclick="window.electronAPI.openSettings()">⚙️ Einstellungen</button>
 </div>
 
@@ -90,7 +90,7 @@
                 <span class="zoom-level font-mono text-lg">0.0x</span>
                 <button class="btn zoom-in px-3 py-1">+</button>
             </div>
-            <input type="range" min="0" max="36" step="0.2" class="zoom-slider w-full mt-2">
+            <input type="range" min="0" max="36" step="0.2" class="zoom-slider w-full mt-1">
         </section>
 
         <!-- Fokus & Belichtung nebeneinander -->
@@ -177,7 +177,7 @@
 
         <!-- Presets -->
         <details open class="rounded-md overflow-hidden"
-                 style="margin-top: 8px; margin-bottom: 15px;">
+                 style="margin-top: 8px; margin-bottom: 10px;">
             <summary class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-0 font-sans cursor-pointer px-4 py-2 text-lg marker:text-blue-500 marker:text-xl"><span class="font-semibold mb-1.5">Presets</span></summary>
         <section class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-0 font-sans my-1.5 px-4 py-4 space-y-4">
             <div class="grid grid-cols-4 gap-2 text-sm">

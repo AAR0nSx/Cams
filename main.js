@@ -71,7 +71,7 @@ app.whenReady()
 */
 app.on("ready", () => {
   window = createWindow();
-  window.webContents.openDevTools(); //nur für debugging benötigt
+  //window.webContents.openDevTools(); //nur für debugging benötigt
   //sendSettings(settings);
 });
 
