@@ -20,6 +20,7 @@ const store = new Store();
 let window;
 
 //console.log('electronApp:', electronApp);
+
 //Erstellt das main Window
 function createWindow() {
   window = new BrowserWindow({
@@ -46,29 +47,9 @@ function createWindow() {
         window.focus();
       })
 
-
-
-/*
-  window.loadFile(nodePath.join(__dirname, 'UI', 'index.html'))
-
-  window
-      .loadFile("./UI/index.html")
-      //.then(() => { window.webContents.send('sendSettings', settings.renderer); })
-      .then(() => {
-        window.show();
-        window.focus();
-      });
-*/
-
   return window;
 }
-/*
-app.whenReady()
-    .then(() => {
-      createWindow();
-      //window.webContents.openDevTools() //nur für debugging benötigt!
-    });
-*/
+
 app.on("ready", () => {
   window = createWindow();
   //window.webContents.openDevTools(); //nur für debugging benötigt

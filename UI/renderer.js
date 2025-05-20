@@ -122,30 +122,6 @@ function setCameraStatus(ip, status) {
 }
 
 
-//refresh Camera UIs
-/*
-async function refreshCameraUIs() {
-    const container = document.getElementById("camera-container");
-    container.innerHTML = ""; // Alte UIs entfernen
-
-    const settings = await window.electronAPI.getSettings();
-    const cameraIPs = settings.cameraIPs || [];
-    const template = document.getElementById("camera-template");
-
-    cameraIPs.forEach((ip, index) => {
-        const clone = template.content.cloneNode(true);
-        const wrapper = clone.querySelector(".camera-ui");
-        wrapper.dataset.ip = ip;
-
-        //data = await electronAPI.getCameraData(ip);
-        //wrapper.querySelector(".camera-label").textContent = data.cameraname;//`Kamera ${index + 1} (${ip})`;
-
-        container.appendChild(wrapper);
-        initCameraUI(wrapper, ip);
-    });
-}
-*/
-
 
 //init Camera UI
 function initCameraUI(wrapper, ip) {
