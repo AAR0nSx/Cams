@@ -309,8 +309,12 @@ function initCameraUI(wrapper, ip) {
         const ecValueEl = wrapper.querySelector(".value-exposure-compensation");
 
         // Initialwert aus Kamera setzen
+
+        //????? Hier WEITER
         if (data.exposurelevelname !== undefined) {
-            ecValueEl.textContent = data.exposurelevelname;
+            const rawValue = parseInt(data.exposurelevelname, 10);
+            ecValueEl.dataset.rawValue = rawValue;
+            ecValueEl.textContent = rawValue - 5;
         }
 
         // Funktion zum Aktualisieren
@@ -479,8 +483,10 @@ function applySettingsToUI(wrapper, cameraData) {
             if (className === "focus-mode"){
                 if(cameraData.focusautoidx === "2"){ //auto
                     console.log("ES IST 2"); //setze hier auf Auto
+                    wrapper.querySelector(`.focus-mode`).value = "1";
                 }else if(cameraData.focusautoidx === "3"){ //manual
                     console.log("ES IST 3"); //setze hier auf manuell
+                    wrapper.querySelector(`.focus-mode`).value = "0";
                 }
             }
 
