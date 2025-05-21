@@ -313,7 +313,8 @@ ipcMain.handle("set-exposure", async (event, key, value, ip) => {
     exposurecompensation: "exposurelevelname",
     gain: "gainmanualidx",
     gamma: "gammanameindex",
-    exposuremode: "exposuremodeindex"
+    exposuremode: "exposuremodeindex",
+    iris : "irispriidx"
   };
 
   const mappedKey = keyMap[key] || key;

@@ -292,7 +292,11 @@ function initCameraUI(wrapper, ip) {
             { key: "shuttermanualidx", selector: "shutter" },
             { key: "gainmanualidx", selector: "gain" },
             { key: "gammanameindex", selector: "gamma" },
-            { key: "exposurelevelname", selector: "value-exposure-compensation"}
+            { key: "exposurelevelname", selector: "value-exposure-compensation"},
+            //Beim Setzen heißt es priidx
+            { key: "irispriidx", selector:"iris"},
+            //Beim abrufen/speichern in setinfo.cgi heißt es irismanualidx
+            { key: "irismanualidx", selector: "iris" },
         ];
 
         exposureFields.forEach(({ key, selector }) => {
@@ -308,9 +312,7 @@ function initCameraUI(wrapper, ip) {
         //Exposure Compensation
         const ecValueEl = wrapper.querySelector(".value-exposure-compensation");
 
-        // Initialwert aus Kamera setzen
-
-        //????? Hier WEITER
+        // Initialwert aus Kamera setzen (um 5 versetzt, weil die Kamera Werte von 0 bis 10 nimmt)
         if (data.exposurelevelname !== undefined) {
             const rawValue = parseInt(data.exposurelevelname, 10);
             ecValueEl.dataset.rawValue = rawValue;
@@ -470,7 +472,9 @@ function applySettingsToUI(wrapper, cameraData) {
         "exposuremodeindex": "exposure-mode",
         "shuttermanualidx": "shutter",
         "gainmanualidx": "gain",
-        "gammanameindex": "gamma"
+        "gammanameindex": "gamma",
+        "irispriidx": "iris",
+        "irismanualidx": "iris"
     };
 
     Object.entries(mapping).forEach(([cameraKey, className]) => {
