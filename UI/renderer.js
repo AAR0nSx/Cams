@@ -63,7 +63,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
                     if (data?.netip) {
 
-                        wrapper.querySelector(".camera-label").textContent = `${data?.cameraname} (${ip})`;
+                        //wrapper.querySelector(".camera-label").textContent = `${data?.cameraname} (${ip})`;
+                        wrapper.querySelector(".camera-label").innerHTML = `${data?.cameraname} (<u>${ip}</u>)`;
                         //Wenn man auf das Label klickt, wird man zum Webinterface geleitet
                         wrapper.querySelector(".camera-label").addEventListener("click", () => {
                             window.electronAPI.openExternal(`http://${ip}`);
