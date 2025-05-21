@@ -1,6 +1,6 @@
 {
   "name": "newtek_ndi_control",
-  "version": "1.0.1BETA",
+  "version": "1.0.2BETA",
   "description": "NDI Kamerasteuerung mit Electron",
   "author": "Aaron Standke",
   "main": "main.js",

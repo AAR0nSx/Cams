@@ -473,23 +473,32 @@ function applySettingsToUI(wrapper, cameraData) {
         "shuttermanualidx": "shutter",
         "gainmanualidx": "gain",
         "gammanameindex": "gamma",
+        //Beim setzen heißt es irispriidx
         "irispriidx": "iris",
+        //Beim Speichern irismanualidx
         "irismanualidx": "iris"
     };
 
+    //Für jeden Eintrag im mapping Objekt - cameraKey=Wert aus Kameradaten; className=Klasse im DOM
     Object.entries(mapping).forEach(([cameraKey, className]) => {
-        const el = wrapper.querySelector(`.${className}`);
+        const el = wrapper.querySelector(`.${className}`); //Wähle alle mit dem classname aus:
 
-        if (el && cameraData[cameraKey] !== undefined) {
-            el.value = cameraData[cameraKey];
+        if (el && cameraData[cameraKey] !== undefined) { //Wenn Klassenname und Kamerawert vorhanden
+            el.value = cameraData[cameraKey]; //Setze Wert vom Objekt mit der Klasse auf den Kamerawert
 
+            //Der value ist im DOM meist ein <span> mit der Klasse value-...
+            //Classname ist z.B. picture-brightness
+            //Split(-), splittet das am "-" --> Also: [picture, brightness]
+            //pop() nimmt das letzzte element --> brightness
+            //Ergebnis: wrapper.querySelector( .value-brightness )
+            //Und value-brightness ist das span Element dass den Wert/Value anzeigt
             const valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
+
+            //spezielles mapping für focus-mode (hat jeweils 2 Zustände je nachdem wie focus-mode abgefragt wird (0-4))
             if (className === "focus-mode"){
                 if(cameraData.focusautoidx === "2"){ //auto
-                    console.log("ES IST 2"); //setze hier auf Auto
                     wrapper.querySelector(`.focus-mode`).value = "1";
                 }else if(cameraData.focusautoidx === "3"){ //manual
-                    console.log("ES IST 3"); //setze hier auf manuell
                     wrapper.querySelector(`.focus-mode`).value = "0";
                 }
             }
