@@ -473,6 +473,7 @@ function applySettingsToUI(wrapper, cameraData) {
         "shuttermanualidx": "shutter",
         "gainmanualidx": "gain",
         "gammanameindex": "gamma",
+        "exposurelevelname": "value-exposure-compensation",
         //Beim setzen heißt es irispriidx
         "irispriidx": "iris",
         //Beim Speichern irismanualidx
@@ -483,16 +484,26 @@ function applySettingsToUI(wrapper, cameraData) {
     Object.entries(mapping).forEach(([cameraKey, className]) => {
         const el = wrapper.querySelector(`.${className}`); //Wähle alle mit dem classname aus:
 
+
+
         if (el && cameraData[cameraKey] !== undefined) { //Wenn Klassenname und Kamerawert vorhanden
             el.value = cameraData[cameraKey]; //Setze Wert vom Objekt mit der Klasse auf den Kamerawert
 
-            //Der value ist im DOM meist ein <span> mit der Klasse value-...
-            //Classname ist z.B. picture-brightness
-            //Split(-), splittet das am "-" --> Also: [picture, brightness]
-            //pop() nimmt das letzzte element --> brightness
-            //Ergebnis: wrapper.querySelector( .value-brightness )
-            //Und value-brightness ist das span Element dass den Wert/Value anzeigt
-            const valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
+            let valueSpan = "";
+            //Wenn es um die value exposure compensation geht Extrabehandlung, weil es so leichter ging
+            if(className === "value-exposure-compensation"){
+                //Classname ist hier nämlich schon vollständig vorhanden und beim Zusammenbauen kracht es sonst
+                valueSpan = wrapper.querySelector(`.${className}`);
+
+            }else{
+                //Der value ist im DOM meist ein <span> mit der Klasse value-...
+                //Classname ist z.B. picture-brightness
+                //Split(-), splittet das am "-" --> Also: [picture, brightness]
+                //pop() nimmt das letzzte element --> brightness
+                //Ergebnis: wrapper.querySelector( .value-brightness )
+                //Und value-brightness ist das span Element dass den Wert/Value anzeigt
+                valueSpan = wrapper.querySelector(`.value-${className.split("-").pop()}`);
+            }
 
             //spezielles mapping für focus-mode (hat jeweils 2 Zustände je nachdem wie focus-mode abgefragt wird (0-4))
             if (className === "focus-mode"){
@@ -502,8 +513,21 @@ function applySettingsToUI(wrapper, cameraData) {
                     wrapper.querySelector(`.focus-mode`).value = "0";
                 }
             }
+                //Wenn exposure compensation und valueSpan existieren, setze den Wert vom valueSpan auf Kamerawert-5
+            if (className === "value-exposure-compensation" && valueSpan){
+                console.log(`Die Zahl hat den Typ: ${cameraData[cameraKey]}: `, typeof cameraKey)
+                let excompValue = parseInt(cameraData[cameraKey]);
+                excompValue = excompValue - 5;
+                excompValue = excompValue.toString();
+                valueSpan.textContent = excompValue;
+            }else if (valueSpan) {
+                valueSpan.textContent = cameraData[cameraKey];
+            }
 
-            if (valueSpan) valueSpan.textContent = cameraData[cameraKey];
+            //Die Kamera sendet falsche picture settings, also versuche ich das hiermit zu fixen indem
+            //die Werte die die kamera falsch zurück gibt richtig zurückgerechnet werden:
+
+
 
             el.dispatchEvent(new Event("input", { bubbles: true }));
             el.dispatchEvent(new Event("change", { bubbles: true }));
