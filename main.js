@@ -1,7 +1,7 @@
 
 /*
 * Hauptprozess
-* Steuert Eletron
+* Steuert Electron
 */
 
 //172.23.98.93 -> TestIP
